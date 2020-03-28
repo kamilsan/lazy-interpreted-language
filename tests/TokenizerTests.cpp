@@ -56,7 +56,7 @@ TEST(TokenizerTest, HandlingNumbers)
 TEST(TokenizerTest, Keywords)
 {
   std::stringstream stream{"f32 if print fn let void"};
-  std::vector<std::string> keywords{{"f32", "if", "print", "fn", "let", "void"}};
+  std::vector<std::string> keywords{"f32", "if", "print", "fn", "let", "void"};
   Tokenizer tokenizer{stream};
   for(const auto& keyword : keywords)
   {
@@ -64,6 +64,24 @@ TEST(TokenizerTest, Keywords)
     EXPECT_EQ(token.type, TokenType::Keyword);
     ASSERT_TRUE(token.stringValue.has_value());
     EXPECT_EQ(token.stringValue.value(), keyword);
+
+    tokenizer.nextToken();
+  }
+  EXPECT_EQ(tokenizer.peek(), Token());
+  EXPECT_TRUE(tokenizer.end());
+}
+
+TEST(TokenizerTest, Identifiers)
+{
+  std::stringstream stream{"iden _iden iden23 iden_2324_"};
+  std::vector<std::string> identifiers{"iden", "_iden", "iden23", "iden_2324_"};
+  Tokenizer tokenizer{stream};
+  for(const auto& identifier : identifiers)
+  {
+    auto token = tokenizer.peek();
+    EXPECT_EQ(token.type, TokenType::Identifier);
+    ASSERT_TRUE(token.stringValue.has_value());
+    EXPECT_EQ(token.stringValue.value(), identifier);
 
     tokenizer.nextToken();
   }

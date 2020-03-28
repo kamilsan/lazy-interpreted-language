@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <set>
 
 #include "Token.hpp"
 
@@ -15,6 +16,8 @@ public:
 private:
   std::istream& stream_;
   Token token_;
+
+  const static std::set<std::string> keywords_;
 
   bool tryToSkipComments();
   bool tryToSkipSpaces();

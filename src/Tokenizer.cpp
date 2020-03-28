@@ -1,6 +1,11 @@
 #include "Tokenizer.hpp"
 
 #include <cstring>
+#include <sstream>
+
+const std::set<std::string> Tokenizer::keywords_ = 
+  std::set<std::string>{"f32", "if", "print", "fn", "let", "void"};
+
 
 Tokenizer::Tokenizer(std::istream& stream): stream_(stream)
 {
@@ -23,7 +28,7 @@ Token Tokenizer::nextToken()
   {
     while(tryToSkipSpaces() || tryToSkipComments());
 
-    if(isalpha(stream_.peek()) && tryToGetKeywordOrIdentifier())
+    if(tryToGetKeywordOrIdentifier())
       return token_;
     else if(stream_.peek() == '-' || isdigit(stream_.peek()))
     {
@@ -113,5 +118,25 @@ bool Tokenizer::tryToGetNumber()
 
 bool Tokenizer::tryToGetKeywordOrIdentifier()
 {
-  return false;
+  std::stringstream ss;
+  if(isalpha(stream_.peek()) || stream_.peek() == '_')
+  {
+    ss << (char)stream_.peek();
+    stream_.get();
+    while(isalpha(stream_.peek()) || isdigit(stream_.peek()) || stream_.peek() == '_')
+    {
+      ss << (char)stream_.peek();
+      stream_.get();
+    }
+  }
+  else
+    return false;
+
+  std::string str = ss.str();
+  if(keywords_.find(str) != keywords_.end())
+    token_ = Token{TokenType::Keyword, str};
+  else
+    token_ = Token{TokenType::Identifier, str};
+
+  return true;
 }
