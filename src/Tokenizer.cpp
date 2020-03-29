@@ -14,7 +14,7 @@ Tokenizer::Tokenizer(std::istream& stream): stream_(stream), token_()
   {
     nextToken();
   }
-  catch(...)
+  catch(std::runtime_error&)
   {
     throw;
   }
@@ -48,7 +48,7 @@ Token Tokenizer::nextToken()
           return token_;
       }
     }
-    catch(...)
+    catch(std::runtime_error&)
     {
       throw;
     }
@@ -155,45 +155,13 @@ bool Tokenizer::tryToGetString()
       else if(stream_.peek() == '\\')
       {
         stream_.get();
-        auto c = stream_.peek();
-        switch(c)
+        try
         {
-          case '\"':
-            ss << '\"';
-            break;
-          case '\'':
-            ss << '\'';
-            break;
-          case '\\':
-            ss << '\\';
-            break;
-          case '\?':
-            ss << '\?';
-            break;
-          case 'a':
-            ss << '\a';
-            break;
-          case 'b':
-            ss << '\b';
-            break;
-          case 't':
-            ss << '\t';
-            break;
-          case 'v':
-            ss << '\v';
-            break;
-          case 'n':
-            ss << '\n';
-            break;
-          case 'r':
-            ss << '\r';
-            break;
-          case 'f':
-            ss << '\f';
-            break;
-          default:
-            throw std::runtime_error("Unexpected escape sequence!");
-            break; 
+          ss << handleEscapeSeqence();
+        }
+        catch(std::runtime_error&)
+        {
+          throw;
         }
       }
       else
@@ -233,4 +201,35 @@ bool Tokenizer::tryToGetKeywordOrIdentifier()
     token_ = Token{TokenType::Identifier, str};
 
   return true;
+}
+
+char Tokenizer::handleEscapeSeqence() const
+{
+  switch(stream_.peek())
+  {
+    case '\"':
+      return '\"';
+    case '\'':
+      return '\'';
+    case '\\':
+      return '\\';
+    case '\?':
+      return '\?';
+    case 'a':
+      return '\a';
+    case 'b':
+      return '\b';
+    case 't':
+      return '\t';
+    case 'v':
+      return '\v';
+    case 'n':
+      return '\n';
+    case 'r':
+      return '\r';
+    case 'f':
+      return '\f';
+    default:
+      throw std::runtime_error("Unexpected escape sequence!");
+  }
 }

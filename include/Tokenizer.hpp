@@ -24,4 +24,6 @@ private:
   bool tryToGetNumber();
   bool tryToGetString();
   bool tryToGetKeywordOrIdentifier();
+
+  char handleEscapeSeqence() const;
 };
