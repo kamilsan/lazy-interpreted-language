@@ -1,5 +1,6 @@
 #include "Tokenizer.hpp"
 
+#include <exception>
 #include <cstring>
 #include <sstream>
 
@@ -7,9 +8,16 @@ const std::set<std::string> Tokenizer::keywords_ =
   std::set<std::string>{"f32", "if", "print", "fn", "let", "void"};
 
 
-Tokenizer::Tokenizer(std::istream& stream): stream_(stream)
+Tokenizer::Tokenizer(std::istream& stream): stream_(stream), token_()
 {
-  nextToken();
+  try
+  {
+    nextToken();
+  }
+  catch(...)
+  {
+    throw;
+  }
 }
 
 bool Tokenizer::end() const
@@ -26,14 +34,23 @@ Token Tokenizer::nextToken()
 {
   if(stream_.peek() != EOF)
   {
-    while(tryToSkipSpaces() || tryToSkipComments());
-
-    if(tryToGetKeywordOrIdentifier())
-      return token_;
-    else if(stream_.peek() == '-' || isdigit(stream_.peek()))
+    try
     {
-      if(tryToGetNumber())
+      while(tryToSkipSpaces() || tryToSkipComments());
+
+      if(tryToGetKeywordOrIdentifier())
         return token_;
+      if(tryToGetString())
+        return token_;
+      else if(stream_.peek() == '-' || isdigit(stream_.peek()))
+      {
+        if(tryToGetNumber())
+          return token_;
+      }
+    }
+    catch(...)
+    {
+      throw;
     }
   }
   else
@@ -113,6 +130,74 @@ bool Tokenizer::tryToGetNumber()
   }
 
   token_ = Token(TokenType::Number, sign * result);
+  return true;
+}
+
+bool Tokenizer::tryToGetString()
+{
+  std::stringstream ss;
+  if(stream_.peek() == '\"')
+  {
+    stream_.get();
+    while(stream_.peek() != '\"')
+    {
+      if(stream_.peek() == EOF)
+        throw std::runtime_error("Unexpected end of stream!");
+      else if(stream_.peek() == '\\')
+      {
+        stream_.get();
+        auto c = stream_.peek();
+        switch(c)
+        {
+          case '\"':
+            ss << '\"';
+            break;
+          case '\'':
+            ss << '\'';
+            break;
+          case '\\':
+            ss << '\\';
+            break;
+          case '\?':
+            ss << '\?';
+            break;
+          case 'a':
+            ss << '\a';
+            break;
+          case 'b':
+            ss << '\b';
+            break;
+          case 't':
+            ss << '\t';
+            break;
+          case 'v':
+            ss << '\v';
+            break;
+          case 'n':
+            ss << '\n';
+            break;
+          case 'r':
+            ss << '\r';
+            break;
+          case 'f':
+            ss << '\f';
+            break;
+          default:
+            throw std::runtime_error("Unexpected escape sequence!");
+            break; 
+        }
+      }
+      else
+        ss << (char)stream_.peek();
+      stream_.get();
+    }
+    stream_.get();
+  }
+  else
+    return false;
+
+  token_ = Token{TokenType::String, ss.str()};
+
   return true;
 }
 

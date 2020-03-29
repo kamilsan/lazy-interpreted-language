@@ -14,13 +14,14 @@ public:
   const Token& peek() const;
   Token nextToken();
 private:
+  const static std::set<std::string> keywords_;
+
   std::istream& stream_;
   Token token_;
-
-  const static std::set<std::string> keywords_;
 
   bool tryToSkipComments();
   bool tryToSkipSpaces();
   bool tryToGetNumber();
+  bool tryToGetString();
   bool tryToGetKeywordOrIdentifier();
 };

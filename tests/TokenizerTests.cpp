@@ -88,3 +88,39 @@ TEST(TokenizerTest, Identifiers)
   EXPECT_EQ(tokenizer.peek(), Token());
   EXPECT_TRUE(tokenizer.end());
 }
+
+TEST(TokenizerTest, SimpleStrings)
+{
+  std::stringstream stream{"\"343abc_^$&#\" \"afsdf<>:PFJ4\""};
+  std::vector<std::string> strings{"343abc_^$&#", "afsdf<>:PFJ4"};
+  Tokenizer tokenizer{stream};
+  for(const auto& str : strings)
+  {
+    auto token = tokenizer.peek();
+    EXPECT_EQ(token.type, TokenType::String);
+    ASSERT_TRUE(token.stringValue.has_value());
+    EXPECT_EQ(token.stringValue.value(), str);
+
+    tokenizer.nextToken();
+  }
+  EXPECT_EQ(tokenizer.peek(), Token());
+  EXPECT_TRUE(tokenizer.end());
+}
+
+TEST(TokenizerTest, StringsWithEscapeSequences)
+{
+  std::stringstream stream{"\"He said: \\\"Look!\\\"\" \"\\\'quote\\\' \\\? \\\\\" \"New line, etc. \\n \\t \\v \\a \\b \\r \\f\""};
+  std::vector<std::string> strings{"He said: \"Look!\"", "\'quote\' \? \\", "New line, etc. \n \t \v \a \b \r \f"};
+  Tokenizer tokenizer{stream};
+  for(const auto& str : strings)
+  {
+    auto token = tokenizer.peek();
+    EXPECT_EQ(token.type, TokenType::String);
+    ASSERT_TRUE(token.stringValue.has_value());
+    EXPECT_EQ(token.stringValue.value(), str);
+
+    tokenizer.nextToken();
+  }
+  EXPECT_EQ(tokenizer.peek(), Token());
+  EXPECT_TRUE(tokenizer.end());
+}
