@@ -43,6 +43,7 @@ TEST(TokenizerTest, HandlingNumbers)
   for(auto num : numbers)
   {
     auto token = tokenizer.peek();
+    EXPECT_FALSE(tokenizer.end());
     EXPECT_EQ(token.type, TokenType::Number);
     ASSERT_TRUE(token.numericValue.has_value());
     EXPECT_FLOAT_EQ(token.numericValue.value(), num);
@@ -61,6 +62,7 @@ TEST(TokenizerTest, Keywords)
   for(const auto& keyword : keywords)
   {
     auto token = tokenizer.peek();
+    EXPECT_FALSE(tokenizer.end());
     EXPECT_EQ(token.type, TokenType::Keyword);
     ASSERT_TRUE(token.stringValue.has_value());
     EXPECT_EQ(token.stringValue.value(), keyword);
@@ -79,6 +81,7 @@ TEST(TokenizerTest, Identifiers)
   for(const auto& identifier : identifiers)
   {
     auto token = tokenizer.peek();
+    EXPECT_FALSE(tokenizer.end());
     EXPECT_EQ(token.type, TokenType::Identifier);
     ASSERT_TRUE(token.stringValue.has_value());
     EXPECT_EQ(token.stringValue.value(), identifier);
@@ -97,6 +100,7 @@ TEST(TokenizerTest, SimpleStrings)
   for(const auto& str : strings)
   {
     auto token = tokenizer.peek();
+    EXPECT_FALSE(tokenizer.end());
     EXPECT_EQ(token.type, TokenType::String);
     ASSERT_TRUE(token.stringValue.has_value());
     EXPECT_EQ(token.stringValue.value(), str);
@@ -115,6 +119,7 @@ TEST(TokenizerTest, StringsWithEscapeSequences)
   for(const auto& str : strings)
   {
     auto token = tokenizer.peek();
+    EXPECT_FALSE(tokenizer.end());
     EXPECT_EQ(token.type, TokenType::String);
     ASSERT_TRUE(token.stringValue.has_value());
     EXPECT_EQ(token.stringValue.value(), str);

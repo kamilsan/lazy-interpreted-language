@@ -22,7 +22,7 @@ Tokenizer::Tokenizer(std::istream& stream): stream_(stream), token_()
 
 bool Tokenizer::end() const
 {
-  return stream_.eof();
+  return token_.type == TokenType::EOT;
 }
 
 const Token& Tokenizer::peek() const
@@ -104,10 +104,19 @@ bool Tokenizer::tryToGetNumber()
   }
   if(isdigit(stream_.peek()))
   {
-    while(isdigit(stream_.peek()))
+    if(stream_.peek() != '0')
     {
-      result = 10.0 * result + stream_.peek() - '0';
+      while(isdigit(stream_.peek()))
+      {
+        result = 10.0 * result + stream_.peek() - '0';
+        stream_.get();
+      }
+    }
+    else
+    {
       stream_.get();
+      if(stream_.peek() != '.')
+        throw std::runtime_error("Unexpected character!");
     }
 
     if(stream_.peek() == '.')
