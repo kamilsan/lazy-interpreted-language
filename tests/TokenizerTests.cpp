@@ -129,3 +129,98 @@ TEST(TokenizerTest, StringsWithEscapeSequences)
   EXPECT_EQ(tokenizer.peek(), Token());
   EXPECT_TRUE(tokenizer.end());
 }
+
+TEST(TokenizerTest, AssignmentOperators)
+{
+  std::stringstream stream{"= += -= *= /= &= |= ^="};
+  std::vector<std::string> values{"=", "+=", "-=", "*=", "/=", "&=", "|=", "^="};
+  Tokenizer tokenizer{stream};
+  for(const auto& value : values)
+  {
+    auto token = tokenizer.peek();
+    EXPECT_FALSE(tokenizer.end());
+    EXPECT_EQ(token.type, TokenType::AssignOperator);
+    ASSERT_TRUE(token.stringValue.has_value());
+    EXPECT_EQ(token.stringValue.value(), value);
+
+    tokenizer.nextToken();
+  }
+  EXPECT_EQ(tokenizer.peek(), Token());
+  EXPECT_TRUE(tokenizer.end());
+}
+
+TEST(TokenizerTest, ArithmeticOperators)
+{
+  std::stringstream stream{"+ - * /"};
+  std::vector<std::string> values{"+", "-", "*", "/"};
+  Tokenizer tokenizer{stream};
+  for(const auto& value : values)
+  {
+    auto token = tokenizer.peek();
+    EXPECT_FALSE(tokenizer.end());
+    EXPECT_EQ(token.type, TokenType::ArithmeticOperator);
+    ASSERT_TRUE(token.stringValue.has_value());
+    EXPECT_EQ(token.stringValue.value(), value);
+
+    tokenizer.nextToken();
+  }
+  EXPECT_EQ(tokenizer.peek(), Token());
+  EXPECT_TRUE(tokenizer.end());
+}
+
+TEST(TokenizerTest, BinaryOperators)
+{
+  std::stringstream stream{"~ & | ^"};
+  std::vector<std::string> values{"~", "&", "|", "^"};
+  Tokenizer tokenizer{stream};
+  for(const auto& value : values)
+  {
+    auto token = tokenizer.peek();
+    EXPECT_FALSE(tokenizer.end());
+    EXPECT_EQ(token.type, TokenType::BinaryOperator);
+    ASSERT_TRUE(token.stringValue.has_value());
+    EXPECT_EQ(token.stringValue.value(), value);
+
+    tokenizer.nextToken();
+  }
+  EXPECT_EQ(tokenizer.peek(), Token());
+  EXPECT_TRUE(tokenizer.end());
+}
+
+TEST(TokenizerTest, LogicalOperators)
+{
+  std::stringstream stream{"! && ||"};
+  std::vector<std::string> values{"!", "&&", "||"};
+  Tokenizer tokenizer{stream};
+  for(const auto& value : values)
+  {
+    auto token = tokenizer.peek();
+    EXPECT_FALSE(tokenizer.end());
+    EXPECT_EQ(token.type, TokenType::LogicalOperator);
+    ASSERT_TRUE(token.stringValue.has_value());
+    EXPECT_EQ(token.stringValue.value(), value);
+
+    tokenizer.nextToken();
+  }
+  EXPECT_EQ(tokenizer.peek(), Token());
+  EXPECT_TRUE(tokenizer.end());
+}
+
+TEST(TokenizerTest, ComparisonOperators)
+{
+  std::stringstream stream{"== != > < >= <="};
+  std::vector<std::string> values{"==", "!=", ">", "<", ">=", "<="};
+  Tokenizer tokenizer{stream};
+  for(const auto& value : values)
+  {
+    auto token = tokenizer.peek();
+    EXPECT_FALSE(tokenizer.end());
+    EXPECT_EQ(token.type, TokenType::ComparisonOperator);
+    ASSERT_TRUE(token.stringValue.has_value());
+    EXPECT_EQ(token.stringValue.value(), value);
+
+    tokenizer.nextToken();
+  }
+  EXPECT_EQ(tokenizer.peek(), Token());
+  EXPECT_TRUE(tokenizer.end());
+}

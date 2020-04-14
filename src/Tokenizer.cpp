@@ -3,6 +3,7 @@
 #include <exception>
 #include <cstring>
 #include <sstream>
+#include <set>
 
 const std::set<std::string> Tokenizer::keywords_ = 
   std::set<std::string>{"f32", "if", "print", "fn", "let", "void"};
@@ -40,13 +41,18 @@ Token Tokenizer::nextToken()
 
       if(tryToGetKeywordOrIdentifier())
         return token_;
-      if(tryToGetString())
+      else if(tryToGetString())
         return token_;
-      else if(stream_.peek() == '-' || isdigit(stream_.peek()))
-      {
-        if(tryToGetNumber())
-          return token_;
-      }
+      else if(tryToGetNumber())
+        return token_;
+      else if(tryToGetSingleCharToken())
+        return token_;
+      else if(tryToGetCompoundToken())
+        return token_;
+      else if(stream_.peek() == EOF)
+        token_ = Token{};
+      else
+        throw std::runtime_error("Unexpected character!");
     }
     catch(std::runtime_error&)
     {
@@ -75,7 +81,10 @@ bool Tokenizer::tryToSkipComments()
       stream_.get();
     }
     else
+    {
       stream_.unget();
+      break;
+    }
   }
 
   return result;
@@ -132,9 +141,10 @@ bool Tokenizer::tryToGetNumber()
       }
     }
   }
-  else if(sign == -1)
+  else
   {
-    stream_.unget();
+    if(sign == -1)
+      stream_.unget();
     return false;
   }
 
@@ -200,6 +210,84 @@ bool Tokenizer::tryToGetKeywordOrIdentifier()
   else
     token_ = Token{TokenType::Identifier, str};
 
+  return true;
+}
+
+bool Tokenizer::tryToGetSingleCharToken()
+{
+  switch(stream_.peek())
+  {
+    case ',':
+      token_ = Token{TokenType::Comma, ","};
+      break;
+    case ':':
+      token_ = Token{TokenType::Colon, ":"};
+      break;
+    case ';':
+      token_ = Token{TokenType::Semicolon, ";"};
+      break;
+    case '\\':
+      token_ = Token{TokenType::Backslash, "\\"};
+      break;
+    case '(':
+      token_ = Token{TokenType::LParen, "("};
+      break;
+    case ')':
+      token_ = Token{TokenType::RParen, ")"};
+      break;
+    case '{':
+      token_ = Token{TokenType::LBrace, "{"};
+      break;
+    case '}':
+      token_ = Token{TokenType::RBrace, "}"};
+      break;
+    case '=':
+      token_ = Token{TokenType::AssignOperator, "="};
+      break;
+    case '~':
+      token_ = Token{TokenType::BinaryOperator, "~"};
+      break;
+    case '!':
+      token_ = Token{TokenType::LogicalOperator, "!"};
+      break;
+    default:
+      return false;
+  }
+  stream_.get();
+  return true;
+}
+
+bool Tokenizer::tryToGetCompoundToken()
+{
+  const std::set<char> ARITHMETIC_OPS = {'+', '-', '*', '/'};
+  const std::set<char> BINARY_OPS = {'^', '&', '|'};
+
+  TokenType type = TokenType::EOT;
+  
+  if(ARITHMETIC_OPS.find(stream_.peek()) != ARITHMETIC_OPS.end())
+    type = TokenType::ArithmeticOperator;
+  else if(BINARY_OPS.find(stream_.peek()) != BINARY_OPS.end())
+    type = TokenType::BinaryOperator;
+  
+  if(type != TokenType::EOT)
+  {
+    char c = stream_.get();
+    if(stream_.peek() == '=')
+    {
+      stream_.get();
+      token_ = Token{TokenType::AssignOperator, std::string(1, c) + "="};
+    }
+    else if(c != '^' && stream_.peek() == c)
+    {
+      stream_.get();
+      token_ = Token{TokenType::LogicalOperator, std::string(2, c)};
+    }
+    else
+      token_ = Token{type, std::string(1, c)};
+  }
+  else 
+    return false;
+  
   return true;
 }
 

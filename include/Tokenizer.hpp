@@ -24,6 +24,8 @@ private:
   bool tryToGetNumber();
   bool tryToGetString();
   bool tryToGetKeywordOrIdentifier();
+  bool tryToGetSingleCharToken();
+  bool tryToGetCompoundToken();
 
   char handleEscapeSeqence() const;
 };
