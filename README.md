@@ -12,5 +12,5 @@ make
 
 ```
 ./bin/interpreter_tests
-./bin/interpreter
+./bin/interpreter input_file
 ```

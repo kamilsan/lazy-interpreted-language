@@ -1,6 +1,5 @@
 #include <iostream>
 #include <fstream>
-#include <sstream>
 
 #include "Tokenizer.hpp"
 
@@ -19,13 +18,9 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  std::stringstream inputStream;
-  inputStream << file.rdbuf();
-  file.close();
-
   try
   {
-    Tokenizer tokenizer{inputStream};
+    Tokenizer tokenizer{file};
     std::cout << "TOKENS:\n";
     while(!tokenizer.end())
     {
@@ -38,5 +33,6 @@ int main(int argc, char* argv[])
   {
     std::cout << er.what() << "\n";
   }
+  file.close();
   return 0;
 }

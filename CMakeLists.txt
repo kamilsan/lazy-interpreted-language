@@ -26,6 +26,7 @@ include_directories(googletest include)
 set(PROJECT_CODE 
   include/Mark.hpp
   include/Token.hpp
+  src/Stream.cpp include/Stream.hpp
   src/Tokenizer.cpp include/Tokenizer.hpp
 )
 

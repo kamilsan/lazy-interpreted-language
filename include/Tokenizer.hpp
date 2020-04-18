@@ -1,12 +1,11 @@
 #pragma once
 
-#include <iostream>
 #include <set>
 #include <stdexcept>
 #include <sstream>
 
+#include "Stream.hpp"
 #include "Token.hpp"
-#include "Mark.hpp"
 
 class tokenizer_exception : public std::exception
 {
@@ -37,28 +36,8 @@ public:
 private:
   const static std::set<std::string> keywords_;
 
-  std::istream& stream_;
+  Stream stream_;
   Token token_;
-  Mark mark_;
-
-  inline int advance()
-  {
-    stream_.get();
-    int c = stream_.peek();
-
-    if(c == '\n')
-      mark_.newLine();
-    else 
-      mark_.advance();
-
-    return c;
-  }
-
-  inline void unget()
-  {
-    stream_.unget();
-    mark_.column--;
-  }
 
   bool tryToSkipComments();
   bool tryToSkipSpaces();
