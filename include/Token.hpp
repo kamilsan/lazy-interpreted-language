@@ -1,7 +1,7 @@
 #pragma once
 
-#include <string>
 #include <optional>
+#include <string>
 #include <vector>
 
 enum class TokenType : int
@@ -110,6 +110,12 @@ struct Token
           numericValue == other.numericValue;
   }
 
+  static bool isAssigmentOperator(const Token& token);
+  static bool isArithmeticOperator(const Token& token);
+  static bool isLogicalOperator(const Token& token);
+  static bool isBinaryOperator(const Token& token);
+  static bool isComparisonOperator(const Token& token);
+
   friend std::ostream& operator<<(std::ostream& os, const Token& token) 
   {
     os << TOKEN_NAMES[static_cast<int>(token.type)] << ": ";
@@ -126,3 +132,44 @@ struct Token
   std::optional<std::string> stringValue;
   std::optional<float> numericValue;
 };
+
+inline bool Token::isAssigmentOperator(const Token& token)
+{
+  auto type = token.type;
+  return type == TokenType::Assign || type == TokenType::PlusEq ||
+    type == TokenType::MinusEq || type == TokenType::MulEq ||
+    type == TokenType::DivEq || type == TokenType::AndEq ||
+    type == TokenType::OrEq || type == TokenType::XorEq ||
+    type == TokenType::ShiftLeftEq || type == TokenType::ShiftRightEq;
+}
+
+inline bool Token::isArithmeticOperator(const Token& token)
+{
+  auto type = token.type;
+  return type == TokenType::Plus || type == TokenType::Minus ||
+    type == TokenType::Mul || type == TokenType::Div ||
+    type == TokenType::Modulo;
+}
+
+inline bool Token::isLogicalOperator(const Token& token)
+{
+  auto type = token.type;
+  return type == TokenType::LogicalAnd || type == TokenType::LogicalOr ||
+    type == TokenType::LogicalNot;
+}
+
+inline bool Token::isBinaryOperator(const Token& token)
+{
+  auto type = token.type;
+  return type == TokenType::BinaryAnd || type == TokenType::BinaryOr ||
+    type == TokenType::BinaryNot || type == TokenType::BinaryXor ||
+    type == TokenType::ShiftLeft || type == TokenType::ShiftRight;
+}
+
+inline bool Token::isComparisonOperator(const Token& token)
+{
+  auto type = token.type;
+  return type == TokenType::Equal || type == TokenType::NotEqual ||
+    type == TokenType::Greater || type == TokenType::Less ||
+    type == TokenType::GreaterOrEqual || type == TokenType::LessOrEqual;
+}

@@ -53,6 +53,12 @@ TEST(TokenizerTest, HandlingNumbers)
     ASSERT_TRUE(token.numericValue.has_value());
     EXPECT_FLOAT_EQ(token.numericValue.value(), num);
 
+    EXPECT_FALSE(Token::isArithmeticOperator(token));
+    EXPECT_FALSE(Token::isAssigmentOperator(token));
+    EXPECT_FALSE(Token::isBinaryOperator(token));
+    EXPECT_FALSE(Token::isComparisonOperator(token));
+    EXPECT_FALSE(Token::isLogicalOperator(token));
+
     tokenizer.nextToken();
   }
   EXPECT_EQ(tokenizer.peek(), Token());
@@ -72,6 +78,12 @@ TEST(TokenizerTest, Keywords)
     EXPECT_EQ(token.type, TokenType::Keyword);
     ASSERT_TRUE(token.stringValue.has_value());
     EXPECT_EQ(token.stringValue.value(), keyword);
+
+    EXPECT_FALSE(Token::isArithmeticOperator(token));
+    EXPECT_FALSE(Token::isAssigmentOperator(token));
+    EXPECT_FALSE(Token::isBinaryOperator(token));
+    EXPECT_FALSE(Token::isComparisonOperator(token));
+    EXPECT_FALSE(Token::isLogicalOperator(token));
 
     tokenizer.nextToken();
   }
@@ -93,6 +105,12 @@ TEST(TokenizerTest, Identifiers)
     ASSERT_TRUE(token.stringValue.has_value());
     EXPECT_EQ(token.stringValue.value(), identifier);
 
+    EXPECT_FALSE(Token::isArithmeticOperator(token));
+    EXPECT_FALSE(Token::isAssigmentOperator(token));
+    EXPECT_FALSE(Token::isBinaryOperator(token));
+    EXPECT_FALSE(Token::isComparisonOperator(token));
+    EXPECT_FALSE(Token::isLogicalOperator(token));
+
     tokenizer.nextToken();
   }
   EXPECT_EQ(tokenizer.peek(), Token());
@@ -113,6 +131,12 @@ TEST(TokenizerTest, SimpleStrings)
     ASSERT_TRUE(token.stringValue.has_value());
     EXPECT_EQ(token.stringValue.value(), str);
 
+    EXPECT_FALSE(Token::isArithmeticOperator(token));
+    EXPECT_FALSE(Token::isAssigmentOperator(token));
+    EXPECT_FALSE(Token::isBinaryOperator(token));
+    EXPECT_FALSE(Token::isComparisonOperator(token));
+    EXPECT_FALSE(Token::isLogicalOperator(token));
+
     tokenizer.nextToken();
   }
   EXPECT_EQ(tokenizer.peek(), Token());
@@ -132,6 +156,44 @@ TEST(TokenizerTest, StringsWithEscapeSequences)
     EXPECT_EQ(token.type, TokenType::String);
     ASSERT_TRUE(token.stringValue.has_value());
     EXPECT_EQ(token.stringValue.value(), str);
+
+    EXPECT_FALSE(Token::isArithmeticOperator(token));
+    EXPECT_FALSE(Token::isAssigmentOperator(token));
+    EXPECT_FALSE(Token::isBinaryOperator(token));
+    EXPECT_FALSE(Token::isComparisonOperator(token));
+    EXPECT_FALSE(Token::isLogicalOperator(token));
+
+    tokenizer.nextToken();
+  }
+  EXPECT_EQ(tokenizer.peek(), Token());
+  EXPECT_TRUE(tokenizer.end());
+}
+
+TEST(TokenizerTest, ArithmeticOperators)
+{
+  std::stringstream stream{"+ - * / %"};
+  std::vector<std::pair<std::string, TokenType>> tokensInfo{
+    std::make_pair("+", TokenType::Plus), 
+    std::make_pair("-", TokenType::Minus), 
+    std::make_pair("*", TokenType::Mul), 
+    std::make_pair("/", TokenType::Div), 
+    std::make_pair("%", TokenType::Modulo)
+    };
+  
+  Tokenizer tokenizer{stream};
+  for(const auto& tokenInfo : tokensInfo)
+  {
+    auto token = tokenizer.peek();
+    EXPECT_FALSE(tokenizer.end());
+    EXPECT_EQ(token.type, tokenInfo.second);
+    ASSERT_TRUE(token.stringValue.has_value());
+    EXPECT_EQ(token.stringValue.value(), tokenInfo.first);
+
+    EXPECT_TRUE(Token::isArithmeticOperator(token));
+    EXPECT_FALSE(Token::isAssigmentOperator(token));
+    EXPECT_FALSE(Token::isBinaryOperator(token));
+    EXPECT_FALSE(Token::isComparisonOperator(token));
+    EXPECT_FALSE(Token::isLogicalOperator(token));
 
     tokenizer.nextToken();
   }
@@ -164,31 +226,11 @@ TEST(TokenizerTest, AssignmentOperators)
     ASSERT_TRUE(token.stringValue.has_value());
     EXPECT_EQ(token.stringValue.value(), tokenInfo.first);
 
-    tokenizer.nextToken();
-  }
-  EXPECT_EQ(tokenizer.peek(), Token());
-  EXPECT_TRUE(tokenizer.end());
-}
-
-TEST(TokenizerTest, ArithmeticOperators)
-{
-  std::stringstream stream{"+ - * / %"};
-  std::vector<std::pair<std::string, TokenType>> tokensInfo{
-    std::make_pair("+", TokenType::Plus), 
-    std::make_pair("-", TokenType::Minus), 
-    std::make_pair("*", TokenType::Mul), 
-    std::make_pair("/", TokenType::Div), 
-    std::make_pair("%", TokenType::Modulo)
-    };
-  
-  Tokenizer tokenizer{stream};
-  for(const auto& tokenInfo : tokensInfo)
-  {
-    auto token = tokenizer.peek();
-    EXPECT_FALSE(tokenizer.end());
-    EXPECT_EQ(token.type, tokenInfo.second);
-    ASSERT_TRUE(token.stringValue.has_value());
-    EXPECT_EQ(token.stringValue.value(), tokenInfo.first);
+    EXPECT_FALSE(Token::isArithmeticOperator(token));
+    EXPECT_TRUE(Token::isAssigmentOperator(token));
+    EXPECT_FALSE(Token::isBinaryOperator(token));
+    EXPECT_FALSE(Token::isComparisonOperator(token));
+    EXPECT_FALSE(Token::isLogicalOperator(token));
 
     tokenizer.nextToken();
   }
@@ -217,29 +259,11 @@ TEST(TokenizerTest, BinaryOperators)
     ASSERT_TRUE(token.stringValue.has_value());
     EXPECT_EQ(token.stringValue.value(), tokenInfo.first);
 
-    tokenizer.nextToken();
-  }
-  EXPECT_EQ(tokenizer.peek(), Token());
-  EXPECT_TRUE(tokenizer.end());
-}
-
-TEST(TokenizerTest, LogicalOperators)
-{
-  std::stringstream stream{"! && ||"};
-  std::vector<std::pair<std::string, TokenType>> tokensInfo{
-    std::make_pair("!", TokenType::LogicalNot), 
-    std::make_pair("&&", TokenType::LogicalAnd), 
-    std::make_pair("||", TokenType::LogicalOr)
-    };
-
-  Tokenizer tokenizer{stream};
-  for(const auto& tokenInfo : tokensInfo)
-  {
-    auto token = tokenizer.peek();
-    EXPECT_FALSE(tokenizer.end());
-    EXPECT_EQ(token.type, tokenInfo.second);
-    ASSERT_TRUE(token.stringValue.has_value());
-    EXPECT_EQ(token.stringValue.value(), tokenInfo.first);
+    EXPECT_FALSE(Token::isArithmeticOperator(token));
+    EXPECT_FALSE(Token::isAssigmentOperator(token));
+    EXPECT_TRUE(Token::isBinaryOperator(token));
+    EXPECT_FALSE(Token::isComparisonOperator(token));
+    EXPECT_FALSE(Token::isLogicalOperator(token));
 
     tokenizer.nextToken();
   }
@@ -267,6 +291,42 @@ TEST(TokenizerTest, ComparisonOperators)
     EXPECT_EQ(token.type, tokenInfo.second);
     ASSERT_TRUE(token.stringValue.has_value());
     EXPECT_EQ(token.stringValue.value(), tokenInfo.first);
+
+    EXPECT_FALSE(Token::isArithmeticOperator(token));
+    EXPECT_FALSE(Token::isAssigmentOperator(token));
+    EXPECT_FALSE(Token::isBinaryOperator(token));
+    EXPECT_TRUE(Token::isComparisonOperator(token));
+    EXPECT_FALSE(Token::isLogicalOperator(token));
+
+    tokenizer.nextToken();
+  }
+  EXPECT_EQ(tokenizer.peek(), Token());
+  EXPECT_TRUE(tokenizer.end());
+}
+
+TEST(TokenizerTest, LogicalOperators)
+{
+  std::stringstream stream{"! && ||"};
+  std::vector<std::pair<std::string, TokenType>> tokensInfo{
+    std::make_pair("!", TokenType::LogicalNot), 
+    std::make_pair("&&", TokenType::LogicalAnd), 
+    std::make_pair("||", TokenType::LogicalOr)
+    };
+
+  Tokenizer tokenizer{stream};
+  for(const auto& tokenInfo : tokensInfo)
+  {
+    auto token = tokenizer.peek();
+    EXPECT_FALSE(tokenizer.end());
+    EXPECT_EQ(token.type, tokenInfo.second);
+    ASSERT_TRUE(token.stringValue.has_value());
+    EXPECT_EQ(token.stringValue.value(), tokenInfo.first);
+
+    EXPECT_FALSE(Token::isArithmeticOperator(token));
+    EXPECT_FALSE(Token::isAssigmentOperator(token));
+    EXPECT_FALSE(Token::isBinaryOperator(token));
+    EXPECT_FALSE(Token::isComparisonOperator(token));
+    EXPECT_TRUE(Token::isLogicalOperator(token));
 
     tokenizer.nextToken();
   }

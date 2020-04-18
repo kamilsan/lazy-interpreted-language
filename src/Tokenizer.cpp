@@ -1,12 +1,12 @@
 #include "Tokenizer.hpp"
 
-#include <exception>
 #include <cstring>
-#include <sstream>
+#include <exception>
 #include <set>
+#include <sstream>
 
 const std::set<std::string> Tokenizer::keywords_ = 
-  std::set<std::string>{"f32", "if", "print", "fn", "let", "void"};
+  std::set<std::string>{"f32", "if", "print", "fn", "let", "void", "function"};
 
 
 Tokenizer::Tokenizer(std::istream& stream): stream_(stream), token_()

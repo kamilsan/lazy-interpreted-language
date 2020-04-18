@@ -1,8 +1,8 @@
 #pragma once
 
 #include <set>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 
 #include "Stream.hpp"
 #include "Token.hpp"
