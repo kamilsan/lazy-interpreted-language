@@ -60,9 +60,7 @@ Token Tokenizer::nextToken()
     }
   }
   else
-  {
     token_ = Token{};
-  }
 
   return token_;
 }
@@ -240,17 +238,11 @@ bool Tokenizer::tryToGetSingleCharToken()
     case '}':
       token_ = Token{TokenType::RBrace, "}"};
       break;
-    case '=':
-      token_ = Token{TokenType::AssignOperator, "="};
-      break;
     case '%':
-      token_ = Token{TokenType::ArithmeticOperator, "%"};
+      token_ = Token{TokenType::Modulo, "%"};
       break;
     case '~':
-      token_ = Token{TokenType::BinaryOperator, "~"};
-      break;
-    case '!':
-      token_ = Token{TokenType::LogicalOperator, "!"};
+      token_ = Token{TokenType::BinaryNot, "~"};
       break;
     default:
       return false;
@@ -261,29 +253,93 @@ bool Tokenizer::tryToGetSingleCharToken()
 
 bool Tokenizer::tryToGetCompoundToken()
 {
-  const std::set<char> ARITHMETIC_OPS = {'+', '-', '*', '/'};
-  const std::set<char> BINARY_OPS = {'^', '&', '|'};
-
-  TokenType type = TokenType::EOT;
-  
-  if(ARITHMETIC_OPS.find(stream_.peek()) != ARITHMETIC_OPS.end())
-    type = TokenType::ArithmeticOperator;
-  else if(BINARY_OPS.find(stream_.peek()) != BINARY_OPS.end())
-    type = TokenType::BinaryOperator;
-  
-  if(type != TokenType::EOT)
+  if(simpleOrWithEq('+', TokenType::Plus, TokenType::PlusEq)          ||
+     simpleOrWithEq('-', TokenType::Minus, TokenType::MinusEq)        ||
+     simpleOrWithEq('*', TokenType::Mul, TokenType::MulEq)            ||
+     simpleOrWithEq('/', TokenType::Div, TokenType::DivEq)            ||
+     simpleOrWithEq('!', TokenType::LogicalNot, TokenType::NotEqual)  ||
+     simpleOrWithEq('=', TokenType::Assign, TokenType::Equal)         ||
+     simpleOrWithEq('^', TokenType::BinaryXor, TokenType::XorEq)      ||
+     simpleWithEqOrDouble('&', TokenType::BinaryAnd, TokenType::AndEq, TokenType::LogicalAnd) ||
+     simpleWithEqOrDouble('|', TokenType::BinaryOr, TokenType::OrEq, TokenType::LogicalOr))
+    return true;
+  else if(stream_.peek() == '>')
   {
-    char c = stream_.peek();
-    stream_.advance();
-    if(stream_.peek() == '=')
+    if(stream_.advance() == '>')
     {
-      stream_.advance();
-      token_ = Token{TokenType::AssignOperator, std::string(1, c) + "="};
+      if(stream_.advance() == '=')
+      {
+        token_ = Token{TokenType::ShiftRightEq, ">>="};
+        stream_.advance();
+      }
+      else
+        token_ = Token{TokenType::ShiftRight, ">>"};
     }
-    else if(c != '^' && stream_.peek() == c)
+    else if(stream_.peek() == '=')
+    {
+      token_ = Token{TokenType::GreaterOrEqual, ">="};
+      stream_.advance();
+    }
+    else
+      token_ = Token{TokenType::Greater, ">"};
+  }
+  else if(stream_.peek() == '<')
+  {
+    if(stream_.advance() == '<')
+    {
+      if(stream_.advance() == '=')
+      {
+        token_ = Token{TokenType::ShiftLeftEq, "<<="};
+        stream_.advance();
+      }
+      else
+        token_ = Token{TokenType::ShiftLeft, "<<"};
+    }
+    else if(stream_.peek() == '=')
     {
       stream_.advance();
-      token_ = Token{TokenType::LogicalOperator, std::string(2, c)};
+      token_ = Token{TokenType::LessOrEqual, "<="};
+    }
+    else
+      token_ = Token{TokenType::Less, "<"};
+  }
+  else
+    return false;
+  
+  return true;
+}
+
+bool Tokenizer::simpleOrWithEq(char c, TokenType type, TokenType typeEq)
+{
+  if(stream_.peek() == c)
+  {
+    if(stream_.advance() == '=')
+    {
+      token_ = Token{typeEq, std::string(1, c) + "="};
+      stream_.advance();
+    }
+    else
+      token_ = Token{type, std::string(1, c)};
+  }
+  else 
+    return false;
+  
+  return true;
+}
+
+bool Tokenizer::simpleWithEqOrDouble(char c, TokenType type, TokenType typeEq, TokenType typeDouble)
+{
+  if(stream_.peek() == c)
+  {
+    if(stream_.advance() == '=')
+    {
+      token_ = Token{typeEq, std::string(1, c) + "="};
+      stream_.advance();
+    }
+    else if(stream_.peek() == c)
+    {
+      token_ = Token{typeDouble, std::string(2, c)};
+      stream_.advance();
     }
     else
       token_ = Token{type, std::string(1, c)};

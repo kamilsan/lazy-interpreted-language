@@ -47,5 +47,8 @@ private:
   bool tryToGetSingleCharToken();
   bool tryToGetCompoundToken();
 
+  bool simpleOrWithEq(char c, TokenType type, TokenType typeEq);
+  bool simpleWithEqOrDouble(char c, TokenType type, TokenType typeEq, TokenType typeDouble);
+
   char handleEscapeSeqence() const;
 };
