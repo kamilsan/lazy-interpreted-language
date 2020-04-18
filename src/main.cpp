@@ -30,11 +30,7 @@ int main(int argc, char* argv[])
     while(!tokenizer.end())
     {
       auto token = tokenizer.peek();
-      std::cout << "VALUE: ";
-      if(token.stringValue.has_value())
-        std::cout << token.stringValue.value() << "\n";
-      else if(token.numericValue.has_value())
-        std::cout << token.numericValue.value() << "\n";
+      std::cout << token << "\n";
       tokenizer.nextToken();
     }
   }
