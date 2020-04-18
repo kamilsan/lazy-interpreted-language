@@ -38,7 +38,7 @@ TEST(TokenizerTest, SpacesBetweenComments)
 TEST(TokenizerTest, HandlingNumbers)
 {
   std::stringstream stream{"12 -32 0.34 -0.31 2.43 -4.34"};
-  std::vector<float> numbers{12,  -32, 0.34, -0.31, 2.43, -4.34};
+  std::vector<float> numbers{12, -32, 0.34, -0.31, 2.43, -4.34};
   Tokenizer tokenizer{stream};
   for(auto num : numbers)
   {
@@ -151,8 +151,8 @@ TEST(TokenizerTest, AssignmentOperators)
 
 TEST(TokenizerTest, ArithmeticOperators)
 {
-  std::stringstream stream{"+ - * /"};
-  std::vector<std::string> values{"+", "-", "*", "/"};
+  std::stringstream stream{"+ - * / %"};
+  std::vector<std::string> values{"+", "-", "*", "/", "%"};
   Tokenizer tokenizer{stream};
   for(const auto& value : values)
   {

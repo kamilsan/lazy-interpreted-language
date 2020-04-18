@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
       tokenizer.nextToken();
     }
   }
-  catch(std::runtime_error& er)
+  catch(tokenizer_exception& er)
   {
     std::cout << er.what() << "\n";
   }

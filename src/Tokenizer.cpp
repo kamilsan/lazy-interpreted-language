@@ -9,7 +9,7 @@ const std::set<std::string> Tokenizer::keywords_ =
   std::set<std::string>{"f32", "if", "print", "fn", "let", "void"};
 
 
-Tokenizer::Tokenizer(std::istream& stream): stream_(stream), token_()
+Tokenizer::Tokenizer(std::istream& stream): stream_(stream), token_(), mark_()
 {
   try
   {
@@ -52,9 +52,9 @@ Token Tokenizer::nextToken()
       else if(stream_.peek() == EOF)
         token_ = Token{};
       else
-        throw std::runtime_error("Unexpected character!");
+        throw tokenizer_exception("Unexpected character!", mark_);
     }
-    catch(std::runtime_error&)
+    catch(tokenizer_exception&)
     {
       throw;
     }
@@ -72,17 +72,16 @@ bool Tokenizer::tryToSkipComments()
   bool result = false;
   while(stream_.peek() == '/')
   {
-    stream_.get();
-    if(stream_.peek() == '/')
+    if(advance() == '/')
     {
       result = true;
       while(stream_.peek() != '\n' && !stream_.eof())
-        stream_.get();
-      stream_.get();
+        advance();
+      advance();
     }
     else
     {
-      stream_.unget();
+      unget();
       break;
     }
   }
@@ -96,7 +95,7 @@ bool Tokenizer::tryToSkipSpaces()
   while(isspace(stream_.peek()))
   {
     result = true;
-    stream_.get();
+    advance();
   }
 
   return result;
@@ -109,7 +108,7 @@ bool Tokenizer::tryToGetNumber()
   if(stream_.peek() == '-')
   {
     sign = -1;
-    stream_.get();
+    advance();
   }
   if(isdigit(stream_.peek()))
   {
@@ -118,33 +117,33 @@ bool Tokenizer::tryToGetNumber()
       while(isdigit(stream_.peek()))
       {
         result = 10.0 * result + stream_.peek() - '0';
-        stream_.get();
+        advance();
       }
     }
     else
     {
-      stream_.get();
+      advance();
       if(stream_.peek() != '.')
-        throw std::runtime_error("Unexpected character!");
+        throw tokenizer_exception("Unexpected character!", mark_);
     }
 
     if(stream_.peek() == '.')
     {
-      stream_.get();
+      advance();
 
       float mult = 0.1;
       while(isdigit(stream_.peek()))
       {
         result += (stream_.peek() - '0') * mult;
         mult *= 0.1;
-        stream_.get();
+        advance();
       }
     }
   }
   else
   {
     if(sign == -1)
-      stream_.unget();
+      unget();
     return false;
   }
 
@@ -157,28 +156,28 @@ bool Tokenizer::tryToGetString()
   std::stringstream ss;
   if(stream_.peek() == '\"')
   {
-    stream_.get();
+    advance();
     while(stream_.peek() != '\"')
     {
       if(stream_.peek() == EOF)
-        throw std::runtime_error("Unexpected end of stream!");
+        throw tokenizer_exception("Unexpected end of stream!", mark_);
       else if(stream_.peek() == '\\')
       {
-        stream_.get();
+        advance();
         try
         {
           ss << handleEscapeSeqence();
         }
-        catch(std::runtime_error&)
+        catch(tokenizer_exception&)
         {
           throw;
         }
       }
       else
         ss << (char)stream_.peek();
-      stream_.get();
+      advance();
     }
-    stream_.get();
+    advance();
   }
   else
     return false;
@@ -194,11 +193,11 @@ bool Tokenizer::tryToGetKeywordOrIdentifier()
   if(isalpha(stream_.peek()) || stream_.peek() == '_')
   {
     ss << (char)stream_.peek();
-    stream_.get();
+    advance();
     while(isalpha(stream_.peek()) || isdigit(stream_.peek()) || stream_.peek() == '_')
     {
       ss << (char)stream_.peek();
-      stream_.get();
+      advance();
     }
   }
   else
@@ -244,6 +243,9 @@ bool Tokenizer::tryToGetSingleCharToken()
     case '=':
       token_ = Token{TokenType::AssignOperator, "="};
       break;
+    case '%':
+      token_ = Token{TokenType::ArithmeticOperator, "%"};
+      break;
     case '~':
       token_ = Token{TokenType::BinaryOperator, "~"};
       break;
@@ -253,7 +255,7 @@ bool Tokenizer::tryToGetSingleCharToken()
     default:
       return false;
   }
-  stream_.get();
+  advance();
   return true;
 }
 
@@ -271,15 +273,16 @@ bool Tokenizer::tryToGetCompoundToken()
   
   if(type != TokenType::EOT)
   {
-    char c = stream_.get();
+    char c = stream_.peek();
+    advance();
     if(stream_.peek() == '=')
     {
-      stream_.get();
+      advance();
       token_ = Token{TokenType::AssignOperator, std::string(1, c) + "="};
     }
     else if(c != '^' && stream_.peek() == c)
     {
-      stream_.get();
+      advance();
       token_ = Token{TokenType::LogicalOperator, std::string(2, c)};
     }
     else
@@ -318,6 +321,6 @@ char Tokenizer::handleEscapeSeqence() const
     case 'f':
       return '\f';
     default:
-      throw std::runtime_error("Unexpected escape sequence!");
+      throw tokenizer_exception("Unexpected escape sequence!", mark_);
   }
 }
