@@ -1,29 +1,11 @@
 #pragma once
 
+#include <unordered_map>
 #include <set>
-#include <sstream>
-#include <stdexcept>
+#include <string>
 
 #include "Stream.hpp"
 #include "Token.hpp"
-
-class tokenizer_exception : public std::exception
-{
-public:
-  tokenizer_exception(const std::string& msg, const Mark& mark)
-  {
-    std::stringstream ss;
-    ss << "ERROR: (Ln " << mark.line << ", Col " << mark.column << ") " << msg;
-    msg_ = ss.str();
-  }
-
-	const char* what() const throw()
-  {
-    return msg_.c_str();
-  }
-private:
-  std::string msg_;
-};
 
 class Tokenizer
 {
@@ -35,9 +17,12 @@ public:
   Token nextToken();
 private:
   const static std::set<std::string> keywords_;
+  const static std::unordered_map<std::string, TokenType> keywordTokenTypes_;
 
   Stream stream_;
   Token token_;
+
+  std::string makeErrorMessage(std::string err) const;
 
   bool tryToSkipComments();
   bool tryToSkipSpaces();
@@ -49,6 +34,8 @@ private:
 
   bool simpleOrWithEq(char c, TokenType type, TokenType typeEq);
   bool simpleWithEqOrDouble(char c, TokenType type, TokenType typeEq, TokenType typeDouble);
+  bool comparisonShiftOrAssignment(char c, TokenType typeComparison, 
+    TokenType typeComparisonEq, TokenType typeShift, TokenType typeAssign);
 
   char handleEscapeSeqence() const;
 };

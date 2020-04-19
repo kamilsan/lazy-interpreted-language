@@ -15,7 +15,7 @@ public:
   Stream& operator=(Stream&&) = delete;
 
   bool eof() const;
-  int peek() const;
+  char peek() const;
   const Mark& getMark() const;
 
   void unget();

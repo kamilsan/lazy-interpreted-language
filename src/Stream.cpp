@@ -5,9 +5,9 @@ bool Stream::eof() const
   return is_.eof();
 }
 
-int Stream::peek() const
+char Stream::peek() const
 {
-  return is_.peek();
+  return static_cast<char>(is_.peek());
 }
 
 const Mark& Stream::getMark() const

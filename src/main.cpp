@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
       tokenizer.nextToken();
     }
   }
-  catch(tokenizer_exception& er)
+  catch(std::runtime_error& er)
   {
     std::cout << er.what() << "\n";
   }
