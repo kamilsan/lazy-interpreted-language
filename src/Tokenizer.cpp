@@ -6,7 +6,7 @@
 #include <sstream>
 
 const std::set<std::string> Tokenizer::keywords_ = 
-  std::set<std::string>{"f32", "if", "print", "fn", "let", "void", "function"};
+  std::set<std::string>{"f32", "if", "print", "fn", "let", "ret", "void", "function"};
 
 
 Tokenizer::Tokenizer(std::istream& stream): stream_(stream), token_()
@@ -101,13 +101,7 @@ bool Tokenizer::tryToSkipSpaces()
 
 bool Tokenizer::tryToGetNumber()
 {
-  int sign = 1;
   float result = 0;
-  if(stream_.peek() == '-')
-  {
-    sign = -1;
-    stream_.advance();
-  }
   if(isdigit(stream_.peek()))
   {
     if(stream_.peek() != '0')
@@ -119,11 +113,7 @@ bool Tokenizer::tryToGetNumber()
       }
     }
     else
-    {
       stream_.advance();
-      if(stream_.peek() != '.')
-        throw tokenizer_exception("Unexpected character!", stream_.getMark());
-    }
 
     if(stream_.peek() == '.')
     {
@@ -137,15 +127,13 @@ bool Tokenizer::tryToGetNumber()
         stream_.advance();
       }
     }
+    else if(isdigit(stream_.peek()) || isalpha(stream_.peek()))
+      throw tokenizer_exception("Unexpected character!", stream_.getMark());
   }
   else
-  {
-    if(sign == -1)
-      stream_.unget();
     return false;
-  }
 
-  token_ = Token(TokenType::Number, sign * result);
+  token_ = Token(TokenType::Number, result);
   return true;
 }
 

@@ -41,8 +41,8 @@ TEST(TokenizerTest, SpacesBetweenComments)
 
 TEST(TokenizerTest, HandlingNumbers)
 {
-  std::stringstream stream{"12 -32 0.34 -0.31 2.43 -4.34"};
-  std::vector<float> numbers{12, -32, 0.34, -0.31, 2.43, -4.34};
+  std::stringstream stream{"12 14.5 0.34 0.31 0 2.43"};
+  std::vector<float> numbers{12, 14.5, 0.34, 0.31, 0, 2.43};
 
   Tokenizer tokenizer{stream};
   for(auto num : numbers)
@@ -67,8 +67,8 @@ TEST(TokenizerTest, HandlingNumbers)
 
 TEST(TokenizerTest, Keywords)
 {
-  std::stringstream stream{"f32 if print fn let void"};
-  std::vector<std::string> keywords{"f32", "if", "print", "fn", "let", "void"};
+  std::stringstream stream{"f32 if print fn let void ret"};
+  std::vector<std::string> keywords{"f32", "if", "print", "fn", "let", "void", "ret"};
 
   Tokenizer tokenizer{stream};
   for(const auto& keyword : keywords)
