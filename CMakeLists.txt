@@ -8,8 +8,8 @@ endif()
 
 set(CMAKE_BUILD_TYPE Release)
 
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror -pedantic")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
@@ -24,7 +24,10 @@ add_subdirectory(googletest)
 include_directories(googletest include)
 
 set(PROJECT_CODE 
-
+  include/Mark.hpp
+  include/Token.hpp
+  src/Stream.cpp include/Stream.hpp
+  src/Tokenizer.cpp include/Tokenizer.hpp
 )
 
 add_executable(interpreter
@@ -34,6 +37,7 @@ add_executable(interpreter
 
 add_executable(interpreter_tests
   ${PROJECT_CODE}
+  tests/TokenizerTests.cpp
   tests/main_test.cpp
 )
 
