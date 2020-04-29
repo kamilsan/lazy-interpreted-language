@@ -26,8 +26,13 @@ include_directories(googletest include)
 set(PROJECT_CODE 
   include/Mark.hpp
   include/Token.hpp
+  include/AST.hpp
+  include/Visitor.hpp
+  src/PrintVisitor.cpp include/PrintVisitor.hpp
+  src/Node.cpp include/Node.hpp
   src/Stream.cpp include/Stream.hpp
   src/Tokenizer.cpp include/Tokenizer.hpp
+  src/Parser.cpp include/Parser.hpp
 )
 
 add_executable(interpreter
@@ -38,6 +43,7 @@ add_executable(interpreter
 add_executable(interpreter_tests
   ${PROJECT_CODE}
   tests/TokenizerTests.cpp
+  tests/ParserTests.cpp
   tests/main_test.cpp
 )
 
