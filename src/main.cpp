@@ -9,7 +9,7 @@ int main()
 {
   try
   {
-    std::stringstream ss{"2 + 3 * 4 / 5 - 1"};
+    std::stringstream ss{"2 + 3 * -x / 5 - (1 ^ 3)"};
     Parser parser{ss};
     PrintVisitor visitor{};
     parser.parseProgram()->accept(visitor);
