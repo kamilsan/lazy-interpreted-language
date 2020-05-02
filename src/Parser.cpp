@@ -13,51 +13,51 @@ std::unique_ptr<Node> Parser::parseProgram()
 
 std::unique_ptr<ExpressionNode> Parser::parseArithmeticExpression()
 {
-  auto addExpr = parseAddExpression();
+  auto node = parseAddExpression();
   auto token = tokenizer_.peek();
-  if(Token::isBinaryOperator(token))
+  while(Token::isBinaryOperator(token))
   {
     tokenizer_.nextToken();
-    auto left = std::move(addExpr);
-    auto right = parseArithmeticExpression();
+    auto left = std::move(node);
     auto op = binaryOperationFromToken(token);
-    return std::make_unique<BinaryOpNode>(std::move(left), op, std::move(right));
+    auto right = parseAddExpression();
+    node = std::make_unique<BinaryOpNode>(std::move(left), op, std::move(right));
+    token = tokenizer_.peek();
   }
-  else
-    return addExpr;
+  return node;
 }
 
 std::unique_ptr<ExpressionNode> Parser::parseAddExpression()
 {
-  auto factor = parseFactor();
+  auto node = parseFactor();
   auto token = tokenizer_.peek();
-  if(token.type == TokenType::Plus || token.type == TokenType::Minus ||
+  while(token.type == TokenType::Plus || token.type == TokenType::Minus ||
     token.type == TokenType::Modulo)
   {
     tokenizer_.nextToken();
-    auto left = std::move(factor);
-    auto right = parseAddExpression();
+    auto left = std::move(node);
     auto op = binaryOperationFromToken(token);
-    return std::make_unique<BinaryOpNode>(std::move(left), op, std::move(right));
-  }
-  else
-    return factor;
+    auto right = parseFactor();
+    node = std::make_unique<BinaryOpNode>(std::move(left), op, std::move(right));
+    token = tokenizer_.peek();
+  }  
+  return node;
 }
 
 std::unique_ptr<ExpressionNode> Parser::parseFactor()
 {
-  auto unary = parseUnary();
+  auto node = parseUnary();
   auto token = tokenizer_.peek();
-  if(token.type == TokenType::Mul || token.type == TokenType::Div)
+  while(token.type == TokenType::Mul || token.type == TokenType::Div)
   {
     tokenizer_.nextToken();
-    auto left = std::move(unary);
-    auto right = parseFactor();
+    auto left = std::move(node);
     auto op = binaryOperationFromToken(token);
-    return std::make_unique<BinaryOpNode>(std::move(left), op, std::move(right));
+    auto right = parseUnary();
+    node = std::make_unique<BinaryOpNode>(std::move(left), op, std::move(right));
+    token = tokenizer_.peek();
   }
-  else
-    return unary;
+  return node;
 }
 
 std::unique_ptr<ExpressionNode> Parser::parseUnary()
