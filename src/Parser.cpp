@@ -1,14 +1,36 @@
 #include "Parser.hpp"
 
 #include "Node.hpp"
+#include "PrintVisitor.hpp"
 
 #include <stdexcept>
 
 Parser::Parser(std::istream& stream): tokenizer_(stream) {}
 
+void Parser::expectToken(TokenType type, const std::string& msg)
+{
+  auto token = tokenizer_.peek();
+  if(token.type == type)
+    tokenizer_.nextToken();
+  else
+    throw std::runtime_error(msg);
+}
+
+Token Parser::getToken(TokenType type, const std::string& msg)
+{
+  auto token = tokenizer_.peek();
+  if(token.type == type)
+    tokenizer_.nextToken();
+  else
+    throw std::runtime_error(msg);
+
+  return token;
+}
+
+
 std::unique_ptr<Node> Parser::parseProgram()
 {
-  return parseArithmeticExpression();
+  return parseReturnStatement();
 }
 
 std::unique_ptr<ExpressionNode> Parser::parseArithmeticExpression()
@@ -100,6 +122,29 @@ std::unique_ptr<ExpressionNode> Parser::parseTerm()
       throw std::runtime_error("Expected closing parenthesis!");
   }
   return nullptr;
+}
+
+std::unique_ptr<StatementNode> Parser::parseVariableDeclaration()
+{
+  expectToken(TokenType::KeywordLet, "Expected variable declaration!");
+  auto name = std::get<std::string>(getToken(TokenType::Identifier, "Expected variable name!").value);
+  expectToken(TokenType::Colon, "Expected colon!");
+  expectToken(TokenType::KeywordF32, "Expected type name!");
+  expectToken(TokenType::Assign, "Expected assigment operator!");
+
+  auto value = parseArithmeticExpression();
+  expectToken(TokenType::Semicolon, "Expected semicolon!");
+
+  return std::make_unique<VariableDeclarationNode>(name, std::move(value));
+}
+
+std::unique_ptr<StatementNode> Parser::parseReturnStatement()
+{
+  expectToken(TokenType::KeywordRet, "Expected return statement!");
+  auto value = parseArithmeticExpression();
+  expectToken(TokenType::Semicolon, "Expected semicolon!");
+
+  return std::make_unique<ReturnNode>(std::move(value));
 }
 
 UnaryOperation Parser::unaryOperationFromToken(const Token& token) const

@@ -5,12 +5,18 @@
 #include "Node.hpp"
 #include "PrintVisitor.hpp"
 
-int main()
+int main(int argc, char* argv[])
 {
+  if(argc != 2)
+  {
+    std::cout << "Usage: " << argv[0] << " source_file\n";
+    return 0;
+  }
+
   try
   {
-    std::stringstream ss{"x + 2 * z / w << 2"};
-    Parser parser{ss};
+    std::ifstream sourceFile{argv[1]};
+    Parser parser{sourceFile};
     PrintVisitor visitor{};
     parser.parseProgram()->accept(visitor);
   }

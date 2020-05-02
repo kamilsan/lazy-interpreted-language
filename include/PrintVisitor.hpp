@@ -13,6 +13,9 @@ public:
   void visit(const VariableNode&) override;
   void visit(const UnaryNode&) override;
   void visit(const BinaryOpNode&) override;
+  void visit(const VariableDeclarationNode&) override;
+  void visit(const ReturnNode&) override;
+
 private:
   std::string indent() { return std::string(indentation_, ' '); }
 

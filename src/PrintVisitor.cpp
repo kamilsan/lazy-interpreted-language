@@ -30,3 +30,18 @@ void PrintVisitor::visit(const BinaryOpNode& node)
   std::cout << indent() << BinaryOperationNames.at(node.getOperation()) << "\n";
   node.getRightOperand().accept(visitor);
 }
+
+void PrintVisitor::visit(const VariableDeclarationNode& node)
+{
+  std::cout << indent() << "VariableDeclarationNode:\n";
+  auto visitor = PrintVisitor{indentation_ + 1};
+  std::cout << indent() << node.getName() << "\n";
+  node.getValue().accept(visitor);
+}
+
+void PrintVisitor::visit(const ReturnNode& node)
+{
+  std::cout << indent() << "ReturnNode:\n";
+  auto visitor = PrintVisitor{indentation_ + 1};
+  node.getValue().accept(visitor);
+}

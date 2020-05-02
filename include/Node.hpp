@@ -74,6 +74,12 @@ public:
   virtual void accept(Visitor&) const = 0;
 };
 
+class StatementNode : public Node
+{
+public:
+  virtual void accept(Visitor&) const = 0;
+};
+
 class LiteralNode : public ExpressionNode
 {
 public:
@@ -132,3 +138,31 @@ private:
   std::unique_ptr<Node> rightOperand_;
 };
 
+
+class VariableDeclarationNode : public StatementNode
+{
+public:
+  VariableDeclarationNode(std::string name, std::unique_ptr<ExpressionNode> value):
+    name_(name), value_(std::move(value)) {}
+
+  const std::string& getName() const { return name_; }
+  const ExpressionNode& getValue() const { return *value_; }
+
+  void accept(Visitor& visitor) const override { visitor.visit(*this); }
+private:
+  std::string name_;
+  std::unique_ptr<ExpressionNode> value_;
+};
+
+class ReturnNode : public StatementNode
+{
+public:
+  ReturnNode(std::unique_ptr<ExpressionNode> value):
+    value_(std::move(value)) {}
+
+  const ExpressionNode& getValue() const { return *value_; }
+
+  void accept(Visitor& visitor) const override { visitor.visit(*this); }
+private:
+  std::unique_ptr<ExpressionNode> value_;
+};
