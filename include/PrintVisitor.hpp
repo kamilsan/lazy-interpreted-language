@@ -9,13 +9,16 @@ class PrintVisitor : public Visitor
 public:
   PrintVisitor(unsigned int indentation = 0): indentation_(indentation) {}
 
+  void visit(const ProgramNode&) override;
   void visit(const LiteralNode&) override;
   void visit(const VariableNode&) override;
   void visit(const UnaryNode&) override;
   void visit(const BinaryOpNode&) override;
   void visit(const VariableDeclarationNode&) override;
   void visit(const ReturnNode&) override;
-
+  void visit(const BlockNode&) override;
+  void visit(const FunctionDeclarationNode&) override;
+  
 private:
   std::string indent() { return std::string(indentation_, ' '); }
 

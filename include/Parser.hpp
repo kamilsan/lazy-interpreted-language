@@ -16,8 +16,10 @@ public:
   std::unique_ptr<ExpressionNode> parseFactor();
   std::unique_ptr<ExpressionNode> parseUnary();
   std::unique_ptr<ExpressionNode> parseTerm();
-  std::unique_ptr<StatementNode> parseVariableDeclaration();
+  std::unique_ptr<VariableDeclarationNode> parseVariableDeclaration();
   std::unique_ptr<StatementNode> parseReturnStatement();
+  std::unique_ptr<BlockNode> parseBlock();
+  std::unique_ptr<FunctionDeclarationNode> parseFunctionDeclaration();
 
 private:
   Tokenizer tokenizer_;
@@ -27,4 +29,5 @@ private:
 
   UnaryOperation unaryOperationFromToken(const Token& token) const;
   BinaryOperation binaryOperationFromToken(const Token& token) const;
+  TypeName typeNameFromToken(const Token& token) const;
 };

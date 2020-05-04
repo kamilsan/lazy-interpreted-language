@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include <unordered_map>
+#include <list>
 
 #include "Token.hpp"
 #include "Visitor.hpp"
@@ -36,6 +37,12 @@ enum class BinaryOperation
   NotEqual
 };
 
+enum class TypeName
+{
+  F32,
+  Function
+};
+
 const std::unordered_map<UnaryOperation, std::string> UnaryOperationNames = {
   std::make_pair<UnaryOperation, std::string>(UnaryOperation::BinaryNegation, "BinaryNegation"),
   std::make_pair<UnaryOperation, std::string>(UnaryOperation::Minus, "Minus")
@@ -62,6 +69,11 @@ const std::unordered_map<BinaryOperation, std::string> BinaryOperationNames = {
   std::make_pair<BinaryOperation, std::string>(BinaryOperation::NotEqual, "NotEqual")
 };
 
+const std::unordered_map<TypeName, std::string> TypeNameStrings = {
+  std::make_pair<TypeName, std::string>(TypeName::F32, "F32"),
+  std::make_pair<TypeName, std::string>(TypeName::Function, "Function")
+};
+
 class Node
 {
 public:
@@ -80,13 +92,33 @@ public:
   virtual void accept(Visitor&) const = 0;
 };
 
+class ProgramNode : public Node
+{
+public:
+  ProgramNode(): variables_(), functions_() {}
+
+  void addVariable(std::unique_ptr<VariableDeclarationNode> variable) 
+    { variables_.push_back(std::move(variable)); }
+  void addFunction(std::unique_ptr<FunctionDeclarationNode> function) 
+    { functions_.push_back(std::move(function)); }
+
+  const std::list<std::unique_ptr<VariableDeclarationNode>>& getVariables() 
+    const { return variables_; }
+  const std::list<std::unique_ptr<FunctionDeclarationNode>>& getFunctions() 
+    const { return functions_; }
+
+  void accept(Visitor& visitor) const override { visitor.visit(*this); }
+private:
+  std::list<std::unique_ptr<VariableDeclarationNode>> variables_;
+  std::list<std::unique_ptr<FunctionDeclarationNode>> functions_;
+};
+
 class LiteralNode : public ExpressionNode
 {
 public:
   LiteralNode(double value): value_(value) {}
 
   double getValue() const { return value_; }
-  void setValue(double value) { value_ = value; }
 
   void accept(Visitor& visitor) const override { visitor.visit(*this); }
 private:
@@ -99,7 +131,6 @@ public:
   VariableNode(const std::string& name): name_(name) {}
 
   std::string getName() const { return name_; }
-  void setValue(double name) { name_ = name; }
 
   void accept(Visitor& visitor) const override { visitor.visit(*this); }
 private:
@@ -142,15 +173,17 @@ private:
 class VariableDeclarationNode : public StatementNode
 {
 public:
-  VariableDeclarationNode(std::string name, std::unique_ptr<ExpressionNode> value):
-    name_(name), value_(std::move(value)) {}
+  VariableDeclarationNode(const std::string& name, const TypeName& type, std::unique_ptr<ExpressionNode> value):
+    name_(name), type_(type), value_(std::move(value)) {}
 
   const std::string& getName() const { return name_; }
+  const TypeName& getType() const { return type_; }
   const ExpressionNode& getValue() const { return *value_; }
 
   void accept(Visitor& visitor) const override { visitor.visit(*this); }
 private:
   std::string name_;
+  TypeName type_;
   std::unique_ptr<ExpressionNode> value_;
 };
 
@@ -165,4 +198,35 @@ public:
   void accept(Visitor& visitor) const override { visitor.visit(*this); }
 private:
   std::unique_ptr<ExpressionNode> value_;
+};
+
+class BlockNode : public StatementNode
+{
+public:
+  BlockNode(): statements_{} {}
+
+  void addStatement(std::unique_ptr<StatementNode> statement) { statements_.push_back(std::move(statement)); }
+  const std::list<std::unique_ptr<StatementNode>>& getStatements() const { return statements_; }
+
+  void accept(Visitor& visitor) const override { visitor.visit(*this); }
+private:
+  std::list<std::unique_ptr<StatementNode>> statements_;  
+};
+
+class FunctionDeclarationNode : public StatementNode
+{
+public:
+  FunctionDeclarationNode(const std::string& name, const TypeName& returnType, std::unique_ptr<BlockNode> body):
+    name_(name), returnType_(returnType), body_(std::move(body)) {}
+
+  const std::string& getName() const { return name_; }
+  const TypeName& getReturnType() const { return returnType_; }
+  const BlockNode& getBody() const { return *body_; }
+
+  void accept(Visitor& visitor) const override { visitor.visit(*this); }
+private:
+  std::string name_;
+  TypeName returnType_;
+  std::unique_ptr<BlockNode> body_;
+  //TODO: args
 };

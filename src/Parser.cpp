@@ -30,7 +30,24 @@ Token Parser::getToken(TokenType type, const std::string& msg)
 
 std::unique_ptr<Node> Parser::parseProgram()
 {
-  return parseReturnStatement();
+  auto programNode = std::make_unique<ProgramNode>();
+  auto token = tokenizer_.peek();
+  while(token.type == TokenType::KeywordFn || token.type == TokenType::KeywordLet)
+  {
+    if(token.type == TokenType::KeywordFn)
+    {
+      auto functionDeclNode = parseFunctionDeclaration();
+      programNode->addFunction(std::move(functionDeclNode));
+    }
+    else if(token.type == TokenType::KeywordLet)
+    {
+      auto variableDeclNode = parseVariableDeclaration();
+      programNode->addVariable(std::move(variableDeclNode));
+    }
+    token = tokenizer_.peek();
+  }
+  expectToken(TokenType::EOT, "Unexpected token!");
+  return programNode;
 }
 
 std::unique_ptr<ExpressionNode> Parser::parseArithmeticExpression()
@@ -124,18 +141,25 @@ std::unique_ptr<ExpressionNode> Parser::parseTerm()
   return nullptr;
 }
 
-std::unique_ptr<StatementNode> Parser::parseVariableDeclaration()
+std::unique_ptr<VariableDeclarationNode> Parser::parseVariableDeclaration()
 {
   expectToken(TokenType::KeywordLet, "Expected variable declaration!");
   auto name = std::get<std::string>(getToken(TokenType::Identifier, "Expected variable name!").value);
   expectToken(TokenType::Colon, "Expected colon!");
-  expectToken(TokenType::KeywordF32, "Expected type name!");
-  expectToken(TokenType::Assign, "Expected assigment operator!");
+  auto token = tokenizer_.peek();
+  if(Token::isTypeName(token))
+  {
+    auto type = typeNameFromToken(token);
+    tokenizer_.nextToken();
+    expectToken(TokenType::Assign, "Expected assigment operator!");
 
-  auto value = parseArithmeticExpression();
-  expectToken(TokenType::Semicolon, "Expected semicolon!");
+    auto value = parseArithmeticExpression();
+    expectToken(TokenType::Semicolon, "Expected semicolon!");
 
-  return std::make_unique<VariableDeclarationNode>(name, std::move(value));
+    return std::make_unique<VariableDeclarationNode>(name, type, std::move(value));
+  }
+  else
+    throw std::runtime_error("Expected type name!");
 }
 
 std::unique_ptr<StatementNode> Parser::parseReturnStatement()
@@ -146,6 +170,51 @@ std::unique_ptr<StatementNode> Parser::parseReturnStatement()
 
   return std::make_unique<ReturnNode>(std::move(value));
 }
+
+std::unique_ptr<BlockNode> Parser::parseBlock()
+{
+  expectToken(TokenType::LBrace, "Expected block statement!");
+  auto blockNode = std::make_unique<BlockNode>();
+  auto token = tokenizer_.peek();
+  while(token.type == TokenType::KeywordRet || token.type == TokenType::KeywordLet)
+  {
+    if(token.type == TokenType::KeywordRet)
+    {
+      auto retNode = parseReturnStatement();
+      blockNode->addStatement(std::move(retNode));
+    }
+    else if(token.type == TokenType::KeywordLet)
+    {
+      auto varDeclNode = parseVariableDeclaration();
+      blockNode->addStatement(std::move(varDeclNode));
+    }
+    token = tokenizer_.peek();
+  }
+  expectToken(TokenType::RBrace, "Expected block end!");
+  return blockNode;
+}
+
+std::unique_ptr<FunctionDeclarationNode> Parser::parseFunctionDeclaration()
+{
+  expectToken(TokenType::KeywordFn, "Expected function declaration!");
+  auto name = std::get<std::string>(getToken(TokenType::Identifier, "Expected function name!").value);
+  expectToken(TokenType::LParen, "Expected arguments list!");
+  // TODO: Arg list
+  expectToken(TokenType::RParen, "Expected closing parenthesis!");
+  expectToken(TokenType::Colon, "Expected colon!");
+  auto token = tokenizer_.peek();
+  if(Token::isTypeName(token))
+  {
+    auto type = typeNameFromToken(token);
+    tokenizer_.nextToken();
+
+    auto body = parseBlock();
+    return std::make_unique<FunctionDeclarationNode>(name, type, std::move(body));
+  }
+  else
+    throw std::runtime_error("Expected type name!");
+}
+
 
 UnaryOperation Parser::unaryOperationFromToken(const Token& token) const
 {
@@ -207,3 +276,16 @@ BinaryOperation Parser::binaryOperationFromToken(const Token& token) const
   }
 }
 
+TypeName Parser::typeNameFromToken(const Token& token) const
+{
+  auto type = token.type;
+  switch(type)
+  {
+    case TokenType::KeywordF32:
+      return TypeName::F32;
+    case TokenType::KeywordFunction:
+      return TypeName::Function;
+    default:
+      throw std::runtime_error("Unexpected token type!");
+  }
+}

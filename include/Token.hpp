@@ -128,6 +128,7 @@ struct Token
   static bool isLogicalOperator(const Token& token);
   static bool isBinaryOperator(const Token& token);
   static bool isComparisonOperator(const Token& token);
+  static bool isTypeName(const Token& token);
 
   friend std::ostream& operator<<(std::ostream& os, const Token& token) 
   {
@@ -184,4 +185,10 @@ inline bool Token::isComparisonOperator(const Token& token)
   return type == TokenType::Equal || type == TokenType::NotEqual ||
     type == TokenType::Greater || type == TokenType::Less ||
     type == TokenType::GreaterOrEqual || type == TokenType::LessOrEqual;
+}
+
+inline bool Token::isTypeName(const Token& token)
+{
+  const auto type = token.type;
+  return type == TokenType::KeywordF32 || type == TokenType::KeywordFunction;
 }
