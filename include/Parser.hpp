@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <list>
 
 #include "Tokenizer.hpp"
 #include "Node.hpp"
@@ -11,6 +12,9 @@ public:
   Parser(std::istream& stream);
 
   std::unique_ptr<Node> parseProgram();
+  std::unique_ptr<ExpressionNode> parseLogicalExpression();
+  std::unique_ptr<ExpressionNode> parseUnaryLogical();
+  std::unique_ptr<ExpressionNode> parseComparisonExpression();
   std::unique_ptr<ExpressionNode> parseArithmeticExpression();
   std::unique_ptr<ExpressionNode> parseAddExpression();
   std::unique_ptr<ExpressionNode> parseFactor();
@@ -23,6 +27,8 @@ public:
 
 private:
   Tokenizer tokenizer_;
+
+  std::list<std::pair<std::string, TypeName>> parseArgumentList();
 
   void expectToken(TokenType type, const std::string& msg);
   Token getToken(TokenType type, const std::string& msg);

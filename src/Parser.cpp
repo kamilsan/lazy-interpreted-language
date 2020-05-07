@@ -50,6 +50,52 @@ std::unique_ptr<Node> Parser::parseProgram()
   return programNode;
 }
 
+std::unique_ptr<ExpressionNode> Parser::parseLogicalExpression()
+{
+  auto node = parseUnaryLogical();
+  auto token = tokenizer_.peek();
+  while(token.type == TokenType::LogicalAnd || token.type == TokenType::LogicalOr)
+  {
+    tokenizer_.nextToken();
+    auto left = std::move(node);
+    auto op = binaryOperationFromToken(token);
+    auto right = parseUnaryLogical();
+    node = std::make_unique<BinaryOpNode>(std::move(left), op, std::move(right));
+    token = tokenizer_.peek();
+  }  
+  return node;
+}
+
+std::unique_ptr<ExpressionNode> Parser::parseUnaryLogical()
+{
+  auto token = tokenizer_.peek();
+  if(token.type == TokenType::LogicalNot)
+  {
+    tokenizer_.nextToken();
+    auto op = unaryOperationFromToken(token);
+    auto comparison = parseComparisonExpression();
+    return std::make_unique<UnaryNode>(op, std::move(comparison));
+  }
+  else
+    return parseComparisonExpression();
+}
+
+std::unique_ptr<ExpressionNode> Parser::parseComparisonExpression()
+{
+  auto node = parseArithmeticExpression();
+  auto token = tokenizer_.peek();
+  while(Token::isComparisonOperator(token))
+  {
+    tokenizer_.nextToken();
+    auto left = std::move(node);
+    auto op = binaryOperationFromToken(token);
+    auto right = parseArithmeticExpression();
+    node = std::make_unique<BinaryOpNode>(std::move(left), op, std::move(right));
+    token = tokenizer_.peek();
+  }
+  return node;
+}
+
 std::unique_ptr<ExpressionNode> Parser::parseArithmeticExpression()
 {
   auto node = parseAddExpression();
@@ -129,7 +175,7 @@ std::unique_ptr<ExpressionNode> Parser::parseTerm()
   else if(token.type == TokenType::LParen)
   {
     tokenizer_.nextToken();
-    auto expr = parseArithmeticExpression();
+    auto expr = parseLogicalExpression();
     if(tokenizer_.peek().type == TokenType::RParen)
     {
       tokenizer_.nextToken();
@@ -153,7 +199,7 @@ std::unique_ptr<VariableDeclarationNode> Parser::parseVariableDeclaration()
     tokenizer_.nextToken();
     expectToken(TokenType::Assign, "Expected assigment operator!");
 
-    auto value = parseArithmeticExpression();
+    auto value = parseLogicalExpression();
     expectToken(TokenType::Semicolon, "Expected semicolon!");
 
     return std::make_unique<VariableDeclarationNode>(name, type, std::move(value));
@@ -199,7 +245,7 @@ std::unique_ptr<FunctionDeclarationNode> Parser::parseFunctionDeclaration()
   expectToken(TokenType::KeywordFn, "Expected function declaration!");
   auto name = std::get<std::string>(getToken(TokenType::Identifier, "Expected function name!").value);
   expectToken(TokenType::LParen, "Expected arguments list!");
-  // TODO: Arg list
+  auto args = parseArgumentList();
   expectToken(TokenType::RParen, "Expected closing parenthesis!");
   expectToken(TokenType::Colon, "Expected colon!");
   auto token = tokenizer_.peek();
@@ -209,12 +255,51 @@ std::unique_ptr<FunctionDeclarationNode> Parser::parseFunctionDeclaration()
     tokenizer_.nextToken();
 
     auto body = parseBlock();
-    return std::make_unique<FunctionDeclarationNode>(name, type, std::move(body));
+    return std::make_unique<FunctionDeclarationNode>(name, type, args, std::move(body));
   }
   else
     throw std::runtime_error("Expected type name!");
 }
 
+std::list<std::pair<std::string, TypeName>> Parser::parseArgumentList()
+{
+  std::list<std::pair<std::string, TypeName>> args{};
+  auto token = tokenizer_.peek();
+  
+  if(token.type == TokenType::Identifier)
+  {
+    const auto name = std::get<std::string>(token.value);
+    tokenizer_.nextToken();
+    expectToken(TokenType::Colon, "Expected colon!");
+    token = tokenizer_.peek();
+    if(Token::isTypeName(token))
+    {
+      auto type = typeNameFromToken(token);
+      args.push_back(std::pair<std::string, TypeName>{name, type});
+      token = tokenizer_.nextToken();
+    }
+    else
+      throw std::runtime_error("Expected type name!");
+
+    while(token.type == TokenType::Comma)
+    {
+      tokenizer_.nextToken();
+      const auto name = 
+        std::get<std::string>(getToken(TokenType::Identifier, "Expected argument name!").value);
+      expectToken(TokenType::Colon, "Expected colon!");
+      token = tokenizer_.peek();
+      if(Token::isTypeName(token))
+      {
+        auto type = typeNameFromToken(token);
+        args.push_back(std::pair<std::string, TypeName>{name, type});
+        token = tokenizer_.nextToken();
+      }
+      else
+        throw std::runtime_error("Expected type name!");
+    }
+  }
+  return args;
+}
 
 UnaryOperation Parser::unaryOperationFromToken(const Token& token) const
 {
@@ -225,8 +310,10 @@ UnaryOperation Parser::unaryOperationFromToken(const Token& token) const
       return UnaryOperation::Minus;
     case TokenType::BinaryNot:
       return UnaryOperation::BinaryNegation;
+    case TokenType::LogicalNot:
+      return UnaryOperation::LogicalNot;
     default:
-      throw std::runtime_error("Unexpected token type!");
+      throw std::runtime_error("Unexpected token for unary operation!");
   }
 }
 
@@ -272,7 +359,7 @@ BinaryOperation Parser::binaryOperationFromToken(const Token& token) const
     case TokenType::NotEqual:
       return BinaryOperation::NotEqual;
     default:
-      throw std::runtime_error("Unexpected token type!");
+      throw std::runtime_error("Unexpected token for binary operation!");
   }
 }
 
@@ -286,6 +373,6 @@ TypeName Parser::typeNameFromToken(const Token& token) const
     case TokenType::KeywordFunction:
       return TypeName::Function;
     default:
-      throw std::runtime_error("Unexpected token type!");
+      throw std::runtime_error("Unexpected token for type name!");
   }
 }

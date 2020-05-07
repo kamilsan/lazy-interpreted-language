@@ -52,7 +52,7 @@ void PrintVisitor::visit(const VariableDeclarationNode& node)
   std::cout << indent() << "VariableDeclarationNode (" 
     << TypeNameStrings.at(node.getType()) << "):\n";
   auto visitor = PrintVisitor{indentation_ + 1};
-  std::cout << indent() << node.getName() << "\n";
+  std::cout << indent() << "Name: " << node.getName() << "\n";
   node.getValue().accept(visitor);
 }
 
@@ -77,7 +77,13 @@ void PrintVisitor::visit(const FunctionDeclarationNode& node)
 {
   std::cout << indent() << "FunctionDeclarationNode (" 
     << TypeNameStrings.at(node.getReturnType()) << "):\n";
-  std::cout << indent() << node.getName() << "\n";
+  std::cout << indent() << "Name: " << node.getName() << "\n";
+  std::cout << indent() << "Arguments:\n";
+  for(const auto& arg : node.getArguments())
+  {
+    std::cout << indent() << " " << arg.first 
+      << " (" << TypeNameStrings.at(arg.second) << ")\n";
+  }
   auto visitor = PrintVisitor{indentation_ + 1};
   node.getBody().accept(visitor);
 }

@@ -12,7 +12,8 @@
 enum class UnaryOperation
 {
   BinaryNegation,
-  Minus
+  Minus,
+  LogicalNot
 };
 
 enum class BinaryOperation
@@ -45,7 +46,8 @@ enum class TypeName
 
 const std::unordered_map<UnaryOperation, std::string> UnaryOperationNames = {
   std::make_pair<UnaryOperation, std::string>(UnaryOperation::BinaryNegation, "BinaryNegation"),
-  std::make_pair<UnaryOperation, std::string>(UnaryOperation::Minus, "Minus")
+  std::make_pair<UnaryOperation, std::string>(UnaryOperation::Minus, "Minus"),
+  std::make_pair<UnaryOperation, std::string>(UnaryOperation::LogicalNot, "LogicalNot")
 };
 
 const std::unordered_map<BinaryOperation, std::string> BinaryOperationNames = {
@@ -70,8 +72,8 @@ const std::unordered_map<BinaryOperation, std::string> BinaryOperationNames = {
 };
 
 const std::unordered_map<TypeName, std::string> TypeNameStrings = {
-  std::make_pair<TypeName, std::string>(TypeName::F32, "F32"),
-  std::make_pair<TypeName, std::string>(TypeName::Function, "Function")
+  std::make_pair<TypeName, std::string>(TypeName::F32, "f32"),
+  std::make_pair<TypeName, std::string>(TypeName::Function, "function")
 };
 
 class Node
@@ -216,17 +218,19 @@ private:
 class FunctionDeclarationNode : public StatementNode
 {
 public:
-  FunctionDeclarationNode(const std::string& name, const TypeName& returnType, std::unique_ptr<BlockNode> body):
-    name_(name), returnType_(returnType), body_(std::move(body)) {}
+  FunctionDeclarationNode(const std::string& name, const TypeName& returnType, 
+    const std::list<std::pair<std::string, TypeName>> args, std::unique_ptr<BlockNode> body):
+      name_(name), returnType_(returnType), arguments_(args), body_(std::move(body)) {}
 
   const std::string& getName() const { return name_; }
   const TypeName& getReturnType() const { return returnType_; }
+  const std::list<std::pair<std::string, TypeName>>& getArguments() const { return arguments_; }
   const BlockNode& getBody() const { return *body_; }
 
   void accept(Visitor& visitor) const override { visitor.visit(*this); }
 private:
   std::string name_;
   TypeName returnType_;
+  std::list<std::pair<std::string, TypeName>> arguments_;
   std::unique_ptr<BlockNode> body_;
-  //TODO: args
 };
