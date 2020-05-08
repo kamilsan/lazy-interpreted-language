@@ -87,3 +87,15 @@ void PrintVisitor::visit(const FunctionDeclarationNode& node)
   auto visitor = PrintVisitor{indentation_ + 1};
   node.getBody().accept(visitor);
 }
+
+void PrintVisitor::visit(const FunctionCallNode& node)
+{
+  std::cout << indent() << "FunctionCallNode:\n";
+  std::cout << indent() << "Name: " << node.getName() << "\n";
+  std::cout << indent() << "Arguments:\n";
+  auto visitor = PrintVisitor{indentation_ + 1};
+  for(const auto& arg : node.getArguments())
+  {
+    arg->accept(visitor);
+  }
+}

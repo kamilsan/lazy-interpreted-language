@@ -18,6 +18,7 @@ public:
   void visit(const ReturnNode&) override;
   void visit(const BlockNode&) override;
   void visit(const FunctionDeclarationNode&) override;
+  void visit(const FunctionCallNode&) override;
   
 private:
   std::string indent() { return std::string(indentation_, ' '); }

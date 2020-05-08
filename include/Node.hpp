@@ -171,6 +171,20 @@ private:
   std::unique_ptr<Node> rightOperand_;
 };
 
+class FunctionCallNode : public ExpressionNode
+{
+public:
+  FunctionCallNode(const std::string& name, std::list<std::unique_ptr<ExpressionNode>> arguments):
+    name_(name), arguments_(std::move(arguments)) {}
+
+  const std::string& getName() const { return name_; }
+  const std::list<std::unique_ptr<ExpressionNode>>& getArguments() const { return arguments_; }
+
+  void accept(Visitor& visitor) const override { visitor.visit(*this); }
+private:
+  std::string name_;
+  std::list<std::unique_ptr<ExpressionNode>> arguments_;
+};
 
 class VariableDeclarationNode : public StatementNode
 {

@@ -169,8 +169,12 @@ std::unique_ptr<ExpressionNode> Parser::parseTerm()
   }
   else if(token.type == TokenType::Identifier)
   {
-    tokenizer_.nextToken();
-    return std::make_unique<VariableNode>(std::get<std::string>(token.value));
+    auto identifierToken = token;
+    token = tokenizer_.nextToken();
+    if(token.type == TokenType::LParen)
+      return parseFunctionCall(identifierToken);
+    else
+      return std::make_unique<VariableNode>(std::get<std::string>(identifierToken.value));
   }
   else if(token.type == TokenType::LParen)
   {
@@ -185,6 +189,37 @@ std::unique_ptr<ExpressionNode> Parser::parseTerm()
       throw std::runtime_error("Expected closing parenthesis!");
   }
   return nullptr;
+}
+
+std::unique_ptr<ExpressionNode> Parser::parseFunctionCall(std::optional<Token> identifierToken)
+{
+  std::string name;
+  if(identifierToken.has_value())
+    name = std::get<std::string>(identifierToken.value().value);
+  else
+    name = std::get<std::string>(getToken(TokenType::Identifier, "Expected function name!").value);
+
+  expectToken(TokenType::LParen, "Expected open parenthesis!");
+
+  std::list<std::unique_ptr<ExpressionNode>> arguments{};
+  auto token = tokenizer_.peek();
+  if(token.type != TokenType::RParen)
+  {
+    auto arg = parseLogicalExpression();
+    arguments.push_back(std::move(arg));
+    token = tokenizer_.peek();
+    while(token.type == TokenType::Comma)
+    {
+      tokenizer_.nextToken();
+      arg = parseLogicalExpression();
+      arguments.push_back(std::move(arg));
+      token = tokenizer_.peek();
+    }
+  }
+
+  expectToken(TokenType::RParen, "Expected closing parenthesis!");
+
+  return std::make_unique<FunctionCallNode>(name, std::move(arguments));
 }
 
 std::unique_ptr<VariableDeclarationNode> Parser::parseVariableDeclaration()
