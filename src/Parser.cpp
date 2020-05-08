@@ -50,6 +50,34 @@ std::unique_ptr<Node> Parser::parseProgram()
   return programNode;
 }
 
+std::unique_ptr<ExpressionNode> Parser::parseStringExpression()
+{
+  auto str = std::get<std::string>(getToken(TokenType::String, "Expected string!").value);
+  std::unique_ptr<ExpressionNode> node = std::make_unique<StringLiteralNode>(str);
+
+  auto token = tokenizer_.peek();
+  while(token.type == TokenType::Colon)
+  {
+    token = tokenizer_.nextToken();
+    if(token.type == TokenType::String)
+    {
+      auto left = std::move(node);
+      auto right = std::make_unique<StringLiteralNode>(std::get<std::string>(token.value));
+      node = std::make_unique<BinaryOpNode>(std::move(left), BinaryOperation::Addition, std::move(right));
+      token = tokenizer_.nextToken();
+    }
+    else
+    {
+      auto left = std::move(node);
+      auto right = parseArithmeticExpression();
+      node = std::make_unique<BinaryOpNode>(std::move(left), BinaryOperation::Addition, std::move(right));
+      token = tokenizer_.peek();
+    }
+  }
+
+  return node;
+}
+
 std::unique_ptr<ExpressionNode> Parser::parseLogicalExpression()
 {
   auto node = parseUnaryLogical();
@@ -165,7 +193,7 @@ std::unique_ptr<ExpressionNode> Parser::parseTerm()
   if(token.type == TokenType::Number)
   {
     tokenizer_.nextToken();
-    return std::make_unique<LiteralNode>(std::get<double>(token.value));
+    return std::make_unique<NumericLiteralNode>(std::get<double>(token.value));
   }
   else if(token.type == TokenType::Identifier)
   {
@@ -205,18 +233,18 @@ std::unique_ptr<ExpressionNode> Parser::parseFunctionCall(std::optional<Token> i
   auto token = tokenizer_.peek();
   if(token.type != TokenType::RParen)
   {
-    auto arg = parseLogicalExpression();
+    auto arg = parseCallArgument();
     arguments.push_back(std::move(arg));
     token = tokenizer_.peek();
     while(token.type == TokenType::Comma)
     {
       tokenizer_.nextToken();
-      arg = parseLogicalExpression();
+      arg = parseCallArgument();
       arguments.push_back(std::move(arg));
       token = tokenizer_.peek();
     }
   }
-
+  
   expectToken(TokenType::RParen, "Expected closing parenthesis!");
 
   return std::make_unique<FunctionCallNode>(name, std::move(arguments));
@@ -308,6 +336,15 @@ std::unique_ptr<FunctionDeclarationNode> Parser::parseFunctionDeclaration()
   }
   else
     throw std::runtime_error("Expected type name!");
+}
+
+std::unique_ptr<ExpressionNode> Parser::parseCallArgument()
+{
+  auto token = tokenizer_.peek();
+  if(token.type == TokenType::String)
+    return parseStringExpression();
+  else
+    return parseLogicalExpression();
 }
 
 std::list<std::pair<std::string, TypeName>> Parser::parseArgumentList()

@@ -13,6 +13,7 @@ public:
   Parser(std::istream& stream);
 
   std::unique_ptr<Node> parseProgram();
+  std::unique_ptr<ExpressionNode> parseStringExpression();
   std::unique_ptr<ExpressionNode> parseLogicalExpression();
   std::unique_ptr<ExpressionNode> parseUnaryLogical();
   std::unique_ptr<ExpressionNode> parseComparisonExpression();
@@ -31,6 +32,7 @@ public:
 private:
   Tokenizer tokenizer_;
 
+  std::unique_ptr<ExpressionNode> parseCallArgument();
   std::list<std::pair<std::string, TypeName>> parseArgumentList();
 
   void expectToken(TokenType type, const std::string& msg);

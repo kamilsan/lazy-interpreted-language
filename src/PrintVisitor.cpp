@@ -20,9 +20,14 @@ void PrintVisitor::visit(const ProgramNode& node)
   }
 }
 
-void PrintVisitor::visit(const LiteralNode& node)
+void PrintVisitor::visit(const NumericLiteralNode& node)
 {
-  std::cout << indent() << "Literal: " << node.getValue() << "\n";
+  std::cout << indent() << "NumericLiteral: " << node.getValue() << "\n";
+}
+
+void PrintVisitor::visit(const StringLiteralNode& node)
+{
+  std::cout << indent() << "StringLiteral: " << node.getValue() << "\n";
 }
 
 void PrintVisitor::visit(const VariableNode& node)

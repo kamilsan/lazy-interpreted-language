@@ -115,16 +115,28 @@ private:
   std::list<std::unique_ptr<FunctionDeclarationNode>> functions_;
 };
 
-class LiteralNode : public ExpressionNode
+class NumericLiteralNode : public ExpressionNode
 {
 public:
-  LiteralNode(double value): value_(value) {}
+  NumericLiteralNode(double value): value_(value) {}
 
   double getValue() const { return value_; }
 
   void accept(Visitor& visitor) const override { visitor.visit(*this); }
 private:
   double value_;
+};
+
+class StringLiteralNode : public ExpressionNode
+{
+public:
+  StringLiteralNode(const std::string& value): value_(value) {}
+
+  const std::string& getValue() const { return value_; }
+
+  void accept(Visitor& visitor) const override { visitor.visit(*this); }
+private:
+  std::string value_;
 };
 
 class VariableNode : public ExpressionNode
