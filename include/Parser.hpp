@@ -22,6 +22,7 @@ public:
   std::unique_ptr<ExpressionNode> parseUnary();
   std::unique_ptr<ExpressionNode> parseTerm();
   std::unique_ptr<ExpressionNode> parseFunctionCall(std::optional<Token> identifierToken = {});
+  std::unique_ptr<FunctionCallStatementNode> parseFunctionCallStatement(std::optional<Token> identifierToken = {});
   std::unique_ptr<VariableDeclarationNode> parseVariableDeclaration();
   std::unique_ptr<StatementNode> parseReturnStatement();
   std::unique_ptr<BlockNode> parseBlock();

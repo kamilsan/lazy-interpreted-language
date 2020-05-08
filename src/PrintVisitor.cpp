@@ -99,3 +99,10 @@ void PrintVisitor::visit(const FunctionCallNode& node)
     arg->accept(visitor);
   }
 }
+
+void PrintVisitor::visit(const FunctionCallStatementNode& node)
+{
+  std::cout << indent() << "FunctionCallStatementNode:\n";
+  auto visitor = PrintVisitor{indentation_ + 1};
+  node.getFunctionCall().accept(visitor);
+}

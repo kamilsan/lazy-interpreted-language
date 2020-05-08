@@ -222,6 +222,13 @@ std::unique_ptr<ExpressionNode> Parser::parseFunctionCall(std::optional<Token> i
   return std::make_unique<FunctionCallNode>(name, std::move(arguments));
 }
 
+std::unique_ptr<FunctionCallStatementNode> Parser::parseFunctionCallStatement(std::optional<Token> identifierToken)
+{
+  auto functionCall = parseFunctionCall(identifierToken);
+  expectToken(TokenType::Semicolon, "Expected semicolon!");
+  return std::make_unique<FunctionCallStatementNode>(std::move(functionCall));
+}
+
 std::unique_ptr<VariableDeclarationNode> Parser::parseVariableDeclaration()
 {
   expectToken(TokenType::KeywordLet, "Expected variable declaration!");
@@ -257,7 +264,9 @@ std::unique_ptr<BlockNode> Parser::parseBlock()
   expectToken(TokenType::LBrace, "Expected block statement!");
   auto blockNode = std::make_unique<BlockNode>();
   auto token = tokenizer_.peek();
-  while(token.type == TokenType::KeywordRet || token.type == TokenType::KeywordLet)
+  while(token.type == TokenType::KeywordRet || 
+    token.type == TokenType::KeywordLet || 
+    token.type == TokenType::Identifier)
   {
     if(token.type == TokenType::KeywordRet)
     {
@@ -268,6 +277,11 @@ std::unique_ptr<BlockNode> Parser::parseBlock()
     {
       auto varDeclNode = parseVariableDeclaration();
       blockNode->addStatement(std::move(varDeclNode));
+    }
+    else if(token.type == TokenType::Identifier)
+    {
+      auto functionCallNode = parseFunctionCallStatement();
+      blockNode->addStatement(std::move(functionCallNode));
     }
     token = tokenizer_.peek();
   }

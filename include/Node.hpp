@@ -157,18 +157,18 @@ private:
 class BinaryOpNode : public ExpressionNode
 {
 public:
-  BinaryOpNode(std::unique_ptr<Node> leftOperand, const BinaryOperation& op, std::unique_ptr<Node> rightOperand):
+  BinaryOpNode(std::unique_ptr<ExpressionNode> leftOperand, const BinaryOperation& op, std::unique_ptr<ExpressionNode> rightOperand):
     leftOperand_(std::move(leftOperand)), operation_(op), rightOperand_(std::move(rightOperand)) {}
 
-  const Node& getLeftOperand() const { return *leftOperand_; }
-  const Node& getRightOperand() const { return *rightOperand_; }
+  const ExpressionNode& getLeftOperand() const { return *leftOperand_; }
+  const ExpressionNode& getRightOperand() const { return *rightOperand_; }
   const BinaryOperation& getOperation() const { return operation_; }
 
   void accept(Visitor& visitor) const override { visitor.visit(*this); }
 private:
-  std::unique_ptr<Node> leftOperand_;
+  std::unique_ptr<ExpressionNode> leftOperand_;
   BinaryOperation operation_;
-  std::unique_ptr<Node> rightOperand_;
+  std::unique_ptr<ExpressionNode> rightOperand_;
 };
 
 class FunctionCallNode : public ExpressionNode
@@ -247,4 +247,17 @@ private:
   TypeName returnType_;
   std::list<std::pair<std::string, TypeName>> arguments_;
   std::unique_ptr<BlockNode> body_;
+};
+
+class FunctionCallStatementNode : public StatementNode
+{
+public:
+  FunctionCallStatementNode(std::unique_ptr<ExpressionNode> functionCallNode):
+    functionCall_(std::move(functionCallNode)) {}
+
+  const ExpressionNode& getFunctionCall() const { return *functionCall_; }
+
+  void accept(Visitor& visitor) const override { visitor.visit(*this); }
+private:
+  std::unique_ptr<ExpressionNode> functionCall_;
 };
