@@ -21,7 +21,9 @@ public:
   void visit(const FunctionDeclarationNode&) override;
   void visit(const FunctionCallNode&) override;
   void visit(const FunctionCallStatementNode&) override;
-  
+  void visit(const LambdaNode&) override;
+  void visit(const LambdaCallNode&) override;
+
 private:
   std::string indent() { return std::string(indentation_, ' '); }
 

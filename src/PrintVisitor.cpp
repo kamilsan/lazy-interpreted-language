@@ -111,3 +111,30 @@ void PrintVisitor::visit(const FunctionCallStatementNode& node)
   auto visitor = PrintVisitor{indentation_ + 1};
   node.getFunctionCall().accept(visitor);
 }
+
+void PrintVisitor::visit(const LambdaNode& node)
+{
+  std::cout << indent() << "LambdaNode (" 
+    << TypeNameStrings.at(node.getReturnType()) << "):\n";
+  std::cout << indent() << "Arguments:\n";
+  for(const auto& arg : node.getArguments())
+  {
+    std::cout << indent() << " " << arg.first 
+      << " (" << TypeNameStrings.at(arg.second) << ")\n";
+  }
+  auto visitor = PrintVisitor{indentation_ + 1};
+  node.getBody().accept(visitor);
+}
+
+void PrintVisitor::visit(const LambdaCallNode& node)
+{
+  std::cout << indent() << "LambdaCallNode:\n";
+  std::cout << indent() << "Arguments:\n";
+  auto visitor = PrintVisitor{indentation_ + 1};
+  for(const auto& arg : node.getArguments())
+  {
+    arg->accept(visitor);
+  }
+  std::cout << indent() << "Lambda:\n";
+  node.getLambda().accept(visitor);
+}

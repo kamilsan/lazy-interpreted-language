@@ -12,6 +12,8 @@ class BlockNode;
 class FunctionDeclarationNode;
 class FunctionCallNode;
 class FunctionCallStatementNode;
+class LambdaNode;
+class LambdaCallNode;
 
 class Visitor
 {
@@ -28,4 +30,6 @@ public:
   virtual void visit(const FunctionDeclarationNode&) = 0;
   virtual void visit(const FunctionCallNode&) = 0;
   virtual void visit(const FunctionCallStatementNode&) = 0;
+  virtual void visit(const LambdaNode&) = 0;
+  virtual void visit(const LambdaCallNode&) = 0;
 };

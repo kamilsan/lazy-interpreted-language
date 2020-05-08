@@ -23,16 +23,20 @@ public:
   std::unique_ptr<ExpressionNode> parseUnary();
   std::unique_ptr<ExpressionNode> parseTerm();
   std::unique_ptr<ExpressionNode> parseFunctionCall(std::optional<Token> identifierToken = {});
-  std::unique_ptr<FunctionCallStatementNode> parseFunctionCallStatement(std::optional<Token> identifierToken = {});
+  std::unique_ptr<FunctionCallStatementNode> parseFunctionCallStatement();
+  std::unique_ptr<FunctionCallStatementNode> parseLambdaCallStatement();
   std::unique_ptr<VariableDeclarationNode> parseVariableDeclaration();
   std::unique_ptr<StatementNode> parseReturnStatement();
   std::unique_ptr<BlockNode> parseBlock();
   std::unique_ptr<FunctionDeclarationNode> parseFunctionDeclaration();
+  std::unique_ptr<LambdaNode> parseLambda();
+  std::unique_ptr<LambdaCallNode> parseLambdaCall(bool lParenSkipped = false);
 
 private:
   Tokenizer tokenizer_;
 
   std::unique_ptr<ExpressionNode> parseCallArgument();
+  std::list<std::unique_ptr<ExpressionNode>> parseCallArgumentList();
   std::list<std::pair<std::string, TypeName>> parseArgumentList();
 
   void expectToken(TokenType type, const std::string& msg);

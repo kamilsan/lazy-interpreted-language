@@ -206,7 +206,10 @@ std::unique_ptr<ExpressionNode> Parser::parseTerm()
   }
   else if(token.type == TokenType::LParen)
   {
-    tokenizer_.nextToken();
+    token = tokenizer_.nextToken();
+    if(token.type == TokenType::Backslash)
+      return parseLambdaCall(true);
+
     auto expr = parseLogicalExpression();
     if(tokenizer_.peek().type == TokenType::RParen)
     {
@@ -226,35 +229,23 @@ std::unique_ptr<ExpressionNode> Parser::parseFunctionCall(std::optional<Token> i
     name = std::get<std::string>(identifierToken.value().value);
   else
     name = std::get<std::string>(getToken(TokenType::Identifier, "Expected function name!").value);
-
-  expectToken(TokenType::LParen, "Expected open parenthesis!");
-
-  std::list<std::unique_ptr<ExpressionNode>> arguments{};
-  auto token = tokenizer_.peek();
-  if(token.type != TokenType::RParen)
-  {
-    auto arg = parseCallArgument();
-    arguments.push_back(std::move(arg));
-    token = tokenizer_.peek();
-    while(token.type == TokenType::Comma)
-    {
-      tokenizer_.nextToken();
-      arg = parseCallArgument();
-      arguments.push_back(std::move(arg));
-      token = tokenizer_.peek();
-    }
-  }
   
-  expectToken(TokenType::RParen, "Expected closing parenthesis!");
-
+  auto arguments = std::move(parseCallArgumentList());
   return std::make_unique<FunctionCallNode>(name, std::move(arguments));
 }
 
-std::unique_ptr<FunctionCallStatementNode> Parser::parseFunctionCallStatement(std::optional<Token> identifierToken)
+std::unique_ptr<FunctionCallStatementNode> Parser::parseFunctionCallStatement()
 {
-  auto functionCall = parseFunctionCall(identifierToken);
+  auto functionCall = parseFunctionCall();
   expectToken(TokenType::Semicolon, "Expected semicolon!");
   return std::make_unique<FunctionCallStatementNode>(std::move(functionCall));
+}
+
+std::unique_ptr<FunctionCallStatementNode> Parser::parseLambdaCallStatement()
+{
+  auto lambdaCall = parseLambdaCall();
+  expectToken(TokenType::Semicolon, "Expected semicolon!");
+  return std::make_unique<FunctionCallStatementNode>(std::move(lambdaCall));
 }
 
 std::unique_ptr<VariableDeclarationNode> Parser::parseVariableDeclaration()
@@ -294,7 +285,8 @@ std::unique_ptr<BlockNode> Parser::parseBlock()
   auto token = tokenizer_.peek();
   while(token.type == TokenType::KeywordRet || 
     token.type == TokenType::KeywordLet || 
-    token.type == TokenType::Identifier)
+    token.type == TokenType::Identifier ||
+    token.type == TokenType::LParen)
   {
     if(token.type == TokenType::KeywordRet)
     {
@@ -311,6 +303,11 @@ std::unique_ptr<BlockNode> Parser::parseBlock()
       auto functionCallNode = parseFunctionCallStatement();
       blockNode->addStatement(std::move(functionCallNode));
     }
+    else if(token.type == TokenType::LParen)
+    {
+      auto lambdaCallNode = parseLambdaCallStatement();
+      blockNode->addStatement(std::move(lambdaCallNode));
+    }
     token = tokenizer_.peek();
   }
   expectToken(TokenType::RBrace, "Expected block end!");
@@ -321,9 +318,7 @@ std::unique_ptr<FunctionDeclarationNode> Parser::parseFunctionDeclaration()
 {
   expectToken(TokenType::KeywordFn, "Expected function declaration!");
   auto name = std::get<std::string>(getToken(TokenType::Identifier, "Expected function name!").value);
-  expectToken(TokenType::LParen, "Expected arguments list!");
   auto args = parseArgumentList();
-  expectToken(TokenType::RParen, "Expected closing parenthesis!");
   expectToken(TokenType::Colon, "Expected colon!");
   auto token = tokenizer_.peek();
   if(Token::isTypeName(token))
@@ -338,17 +333,73 @@ std::unique_ptr<FunctionDeclarationNode> Parser::parseFunctionDeclaration()
     throw std::runtime_error("Expected type name!");
 }
 
+std::unique_ptr<LambdaNode> Parser::parseLambda()
+{
+  expectToken(TokenType::Backslash, "Expected lambda declaration!");
+  auto args = parseArgumentList();
+  expectToken(TokenType::Colon, "Expected colon!");
+  auto token = tokenizer_.peek();
+  if(Token::isTypeName(token))
+  {
+    auto type = typeNameFromToken(token);
+    tokenizer_.nextToken();
+    expectToken(TokenType::Assign, "Expected assignment!");
+    auto body = parseBlock();
+    return std::make_unique<LambdaNode>(type, args, std::move(body));
+  }
+  else
+    throw std::runtime_error("Expected type name!");
+}
+
+std::unique_ptr<LambdaCallNode> Parser::parseLambdaCall(bool lParenSkipped)
+{
+  if(!lParenSkipped)
+    expectToken(TokenType::LParen, "Expected open parenthesis!");
+  
+  auto lambda = parseLambda();
+  expectToken(TokenType::RParen, "Expected closing parenthesis!");
+
+  auto arguments = std::move(parseCallArgumentList());
+  return std::make_unique<LambdaCallNode>(std::move(lambda), std::move(arguments));
+}
+
+std::list<std::unique_ptr<ExpressionNode>> Parser::parseCallArgumentList()
+{
+  expectToken(TokenType::LParen, "Expected open parenthesis!");
+  std::list<std::unique_ptr<ExpressionNode>> arguments{};
+  auto token = tokenizer_.peek();
+  if(token.type != TokenType::RParen)
+  {
+    auto arg = parseCallArgument();
+    arguments.push_back(std::move(arg));
+    token = tokenizer_.peek();
+    while(token.type == TokenType::Comma)
+    {
+      tokenizer_.nextToken();
+      arg = parseCallArgument();
+      arguments.push_back(std::move(arg));
+      token = tokenizer_.peek();
+    }
+  }
+  expectToken(TokenType::RParen, "Expected closing parenthesis!");
+
+  return arguments;
+}
+
 std::unique_ptr<ExpressionNode> Parser::parseCallArgument()
 {
   auto token = tokenizer_.peek();
   if(token.type == TokenType::String)
     return parseStringExpression();
+  else if(token.type == TokenType::Backslash)
+    return parseLambda();
   else
     return parseLogicalExpression();
 }
 
 std::list<std::pair<std::string, TypeName>> Parser::parseArgumentList()
 {
+  expectToken(TokenType::LParen, "Expected arguments list!");
   std::list<std::pair<std::string, TypeName>> args{};
   auto token = tokenizer_.peek();
   
@@ -384,6 +435,7 @@ std::list<std::pair<std::string, TypeName>> Parser::parseArgumentList()
         throw std::runtime_error("Expected type name!");
     }
   }
+  expectToken(TokenType::RParen, "Expected closing parenthesis!");
   return args;
 }
 
@@ -458,6 +510,8 @@ TypeName Parser::typeNameFromToken(const Token& token) const
       return TypeName::F32;
     case TokenType::KeywordFunction:
       return TypeName::Function;
+    case TokenType::KeywordVoid:
+      return TypeName::Void;
     default:
       throw std::runtime_error("Unexpected token for type name!");
   }

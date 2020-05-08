@@ -41,7 +41,8 @@ enum class BinaryOperation
 enum class TypeName
 {
   F32,
-  Function
+  Function,
+  Void
 };
 
 const std::unordered_map<UnaryOperation, std::string> UnaryOperationNames = {
@@ -73,7 +74,8 @@ const std::unordered_map<BinaryOperation, std::string> BinaryOperationNames = {
 
 const std::unordered_map<TypeName, std::string> TypeNameStrings = {
   std::make_pair<TypeName, std::string>(TypeName::F32, "f32"),
-  std::make_pair<TypeName, std::string>(TypeName::Function, "function")
+  std::make_pair<TypeName, std::string>(TypeName::Function, "function"),
+  std::make_pair<TypeName, std::string>(TypeName::Void, "void")
 };
 
 class Node
@@ -195,6 +197,39 @@ public:
   void accept(Visitor& visitor) const override { visitor.visit(*this); }
 private:
   std::string name_;
+  std::list<std::unique_ptr<ExpressionNode>> arguments_;
+};
+
+class LambdaNode : public ExpressionNode
+{
+public:
+  LambdaNode(const TypeName& returnType, 
+    const std::list<std::pair<std::string, TypeName>> args, std::unique_ptr<BlockNode> body):
+      returnType_(returnType), arguments_(args), body_(std::move(body)) {}
+
+  const TypeName& getReturnType() const { return returnType_; }
+  const std::list<std::pair<std::string, TypeName>>& getArguments() const { return arguments_; }
+  const BlockNode& getBody() const { return *body_; }
+
+  void accept(Visitor& visitor) const override { visitor.visit(*this); }
+private:
+  TypeName returnType_;
+  std::list<std::pair<std::string, TypeName>> arguments_;
+  std::unique_ptr<BlockNode> body_;
+};
+
+class LambdaCallNode : public ExpressionNode
+{
+public:
+  LambdaCallNode(std::unique_ptr<LambdaNode> lambda, std::list<std::unique_ptr<ExpressionNode>> arguments):
+    lambda_(std::move(lambda)), arguments_(std::move(arguments)) {}
+
+  const LambdaNode& getLambda() const { return *lambda_; }
+  const std::list<std::unique_ptr<ExpressionNode>>& getArguments() const { return arguments_; }
+
+  void accept(Visitor& visitor) const override { visitor.visit(*this); }
+private:
+  std::unique_ptr<LambdaNode> lambda_;
   std::list<std::unique_ptr<ExpressionNode>> arguments_;
 };
 
