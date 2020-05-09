@@ -16,6 +16,7 @@ public:
   void visit(const UnaryNode&) override;
   void visit(const BinaryOpNode&) override;
   void visit(const VariableDeclarationNode&) override;
+  void visit(const AssignmentNode&) override;
   void visit(const ReturnNode&) override;
   void visit(const BlockNode&) override;
   void visit(const FunctionDeclarationNode&) override;

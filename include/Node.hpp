@@ -38,6 +38,20 @@ enum class BinaryOperation
   NotEqual
 };
 
+enum class AssignmentOperation
+{
+  Assign,
+  PlusEq,
+  MinusEq,
+  MulEq,
+  DivEq,
+  AndEq,
+  OrEq,
+  XorEq,
+  ShiftLeftEq,
+  ShiftRightEq
+};
+
 enum class TypeName
 {
   F32,
@@ -70,6 +84,19 @@ const std::unordered_map<BinaryOperation, std::string> BinaryOperationNames = {
   std::make_pair<BinaryOperation, std::string>(BinaryOperation::LessEq, "LessEq"),
   std::make_pair<BinaryOperation, std::string>(BinaryOperation::Equal, "Equal"),
   std::make_pair<BinaryOperation, std::string>(BinaryOperation::NotEqual, "NotEqual")
+};
+
+const std::unordered_map<AssignmentOperation, std::string> AssignmentOperationNames = {
+  std::make_pair<AssignmentOperation, std::string>(AssignmentOperation::Assign, "Assign"),
+  std::make_pair<AssignmentOperation, std::string>(AssignmentOperation::PlusEq, "PlusEq"),
+  std::make_pair<AssignmentOperation, std::string>(AssignmentOperation::MinusEq, "MinusEq"),
+  std::make_pair<AssignmentOperation, std::string>(AssignmentOperation::MulEq, "MulEq"),
+  std::make_pair<AssignmentOperation, std::string>(AssignmentOperation::DivEq, "DivEq"),
+  std::make_pair<AssignmentOperation, std::string>(AssignmentOperation::AndEq, "AndEq"),
+  std::make_pair<AssignmentOperation, std::string>(AssignmentOperation::OrEq, "OrEq"),
+  std::make_pair<AssignmentOperation, std::string>(AssignmentOperation::XorEq, "XorEq"),
+  std::make_pair<AssignmentOperation, std::string>(AssignmentOperation::ShiftLeftEq, "ShiftLeftEq"),
+  std::make_pair<AssignmentOperation, std::string>(AssignmentOperation::ShiftRightEq, "ShiftRightEq")
 };
 
 const std::unordered_map<TypeName, std::string> TypeNameStrings = {
@@ -247,6 +274,23 @@ public:
 private:
   std::string name_;
   TypeName type_;
+  std::unique_ptr<ExpressionNode> value_;
+};
+
+class AssignmentNode : public StatementNode
+{
+public:
+  AssignmentNode(const std::string& name, const AssignmentOperation& operation, std::unique_ptr<ExpressionNode> value):
+    name_(name), operation_(operation), value_(std::move(value)) {}
+
+  const std::string& getName() const { return name_; }
+  const AssignmentOperation& getOperation() const { return operation_; }
+  const ExpressionNode& getValue() const { return *value_; }
+
+  void accept(Visitor& visitor) const override { visitor.visit(*this); }
+private:
+  std::string name_;
+  AssignmentOperation operation_;
   std::unique_ptr<ExpressionNode> value_;
 };
 

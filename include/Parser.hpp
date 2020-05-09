@@ -23,9 +23,10 @@ public:
   std::unique_ptr<ExpressionNode> parseUnary();
   std::unique_ptr<ExpressionNode> parseTerm();
   std::unique_ptr<ExpressionNode> parseFunctionCall(std::optional<Token> identifierToken = {});
-  std::unique_ptr<FunctionCallStatementNode> parseFunctionCallStatement();
+  std::unique_ptr<FunctionCallStatementNode> parseFunctionCallStatement(std::optional<Token> identifierToken = {});
   std::unique_ptr<FunctionCallStatementNode> parseLambdaCallStatement();
   std::unique_ptr<VariableDeclarationNode> parseVariableDeclaration();
+  std::unique_ptr<AssignmentNode> parseAssignment(std::optional<Token> identifierToken = {});
   std::unique_ptr<StatementNode> parseReturnStatement();
   std::unique_ptr<BlockNode> parseBlock();
   std::unique_ptr<FunctionDeclarationNode> parseFunctionDeclaration();
@@ -45,5 +46,6 @@ private:
 
   UnaryOperation unaryOperationFromToken(const Token& token) const;
   BinaryOperation binaryOperationFromToken(const Token& token) const;
+  AssignmentOperation assignmentOperationFromToken(const Token& token) const;
   TypeName typeNameFromToken(const Token& token) const;
 };

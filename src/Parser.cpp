@@ -228,6 +228,9 @@ std::unique_ptr<ExpressionNode> Parser::parseTerm()
     else
       reportError("Expected closing parenthesis!");
   }
+  else
+    reportError("Expected number, identifier of function call!");
+
   return nullptr;
 }
 
@@ -243,9 +246,9 @@ std::unique_ptr<ExpressionNode> Parser::parseFunctionCall(std::optional<Token> i
   return std::make_unique<FunctionCallNode>(name, std::move(arguments));
 }
 
-std::unique_ptr<FunctionCallStatementNode> Parser::parseFunctionCallStatement()
+std::unique_ptr<FunctionCallStatementNode> Parser::parseFunctionCallStatement(std::optional<Token> identifierToken)
 {
-  auto functionCall = parseFunctionCall();
+  auto functionCall = parseFunctionCall(identifierToken);
   expectToken(TokenType::Semicolon, "Expected semicolon!");
   return std::make_unique<FunctionCallStatementNode>(std::move(functionCall));
 }
@@ -280,12 +283,45 @@ std::unique_ptr<VariableDeclarationNode> Parser::parseVariableDeclaration()
   return nullptr;
 }
 
+std::unique_ptr<AssignmentNode> Parser::parseAssignment(std::optional<Token> identifierToken)
+{
+  std::string name;
+  std::unique_ptr<ExpressionNode> value = nullptr;
+
+  if(identifierToken.has_value())
+    name = std::get<std::string>(identifierToken.value().value);
+  else
+    name = std::get<std::string>(getToken(TokenType::Identifier, "Expected variable name!").value);  
+  
+  auto token = tokenizer_.peek();
+  auto op = AssignmentOperation::Assign;
+  if(Token::isAssigmentOperator(token))
+  {
+    op = assignmentOperationFromToken(token);
+    token = tokenizer_.nextToken();
+    if(op == AssignmentOperation::Assign && token.type == TokenType::Backslash)
+      value = parseLambda();
+    else
+      value = parseArithmeticExpression();
+  }
+  else
+    reportError("Expected assignment operator!");
+
+  expectToken(TokenType::Semicolon, "Expected semicolon!");
+  return std::make_unique<AssignmentNode>(name, op, std::move(value));
+}
+
 std::unique_ptr<StatementNode> Parser::parseReturnStatement()
 {
   expectToken(TokenType::KeywordRet, "Expected return statement!");
-  auto value = parseArithmeticExpression();
-  expectToken(TokenType::Semicolon, "Expected semicolon!");
+  std::unique_ptr<ExpressionNode> value = nullptr;
 
+  if(tokenizer_.peek().type == TokenType::Backslash)
+    value = parseLambda();
+  else
+    value = parseArithmeticExpression();
+
+  expectToken(TokenType::Semicolon, "Expected semicolon!");
   return std::make_unique<ReturnNode>(std::move(value));
 }
 
@@ -311,8 +347,18 @@ std::unique_ptr<BlockNode> Parser::parseBlock()
     }
     else if(token.type == TokenType::Identifier)
     {
-      auto functionCallNode = parseFunctionCallStatement();
-      blockNode->addStatement(std::move(functionCallNode));
+      auto indentifierToken = token;
+      token = tokenizer_.nextToken();
+      if(Token::isAssigmentOperator(token))
+      {
+        auto assignmentNode = parseAssignment(indentifierToken);
+        blockNode->addStatement(std::move(assignmentNode));
+      }
+      else
+      {
+        auto functionCallNode = parseFunctionCallStatement(indentifierToken);
+        blockNode->addStatement(std::move(functionCallNode));
+      }
     }
     else if(token.type == TokenType::LParen)
     {
@@ -466,7 +512,7 @@ UnaryOperation Parser::unaryOperationFromToken(const Token& token) const
     case TokenType::LogicalNot:
       return UnaryOperation::LogicalNot;
     default:
-      throw std::runtime_error("Unexpected token for unary operation!");
+      throw std::runtime_error("Unexpected token for unary operator!");
   }
 }
 
@@ -512,7 +558,37 @@ BinaryOperation Parser::binaryOperationFromToken(const Token& token) const
     case TokenType::NotEqual:
       return BinaryOperation::NotEqual;
     default:
-      throw std::runtime_error("Unexpected token for binary operation!");
+      throw std::runtime_error("Unexpected token for binary operator!");
+  }
+}
+
+AssignmentOperation Parser::assignmentOperationFromToken(const Token& token) const
+{
+  auto type = token.type;
+  switch(type)
+  {
+    case TokenType::Assign:
+      return AssignmentOperation::Assign;
+    case TokenType::PlusEq:
+      return AssignmentOperation::PlusEq;
+    case TokenType::MinusEq:
+      return AssignmentOperation::MinusEq;
+    case TokenType::MulEq:
+      return AssignmentOperation::MulEq;
+    case TokenType::DivEq:
+      return AssignmentOperation::DivEq;
+    case TokenType::AndEq:
+      return AssignmentOperation::AndEq;
+    case TokenType::OrEq:
+      return AssignmentOperation::OrEq;
+    case TokenType::XorEq:
+      return AssignmentOperation::XorEq;
+    case TokenType::ShiftLeftEq:
+      return AssignmentOperation::ShiftLeftEq;
+    case TokenType::ShiftRightEq:
+      return AssignmentOperation::ShiftRightEq;
+    default:
+      throw std::runtime_error("Unexpected token for assignment operator!");
   }
 }
 
