@@ -12,6 +12,7 @@ class ReturnNode;
 class BlockNode;
 class FunctionDeclarationNode;
 class FunctionCallNode;
+class FunctionResultCallNode;
 class FunctionCallStatementNode;
 class LambdaNode;
 class LambdaCallNode;
@@ -31,6 +32,7 @@ public:
   virtual void visit(const BlockNode&) = 0;
   virtual void visit(const FunctionDeclarationNode&) = 0;
   virtual void visit(const FunctionCallNode&) = 0;
+  virtual void visit(const FunctionResultCallNode&) = 0;
   virtual void visit(const FunctionCallStatementNode&) = 0;
   virtual void visit(const LambdaNode&) = 0;
   virtual void visit(const LambdaCallNode&) = 0;

@@ -70,7 +70,7 @@ void PrintVisitor::visit(const AssignmentNode& node)
   std::cout << indent() << "Name: " << node.getName() << "\n";
   std::cout << indent() << "Operator: " << 
     AssignmentOperationNames.at(node.getOperation()) << "\n";
-    
+
   auto visitor = PrintVisitor{indentation_ + 1};
   std::cout << indent() << "Value:\n";
   node.getValue().accept(visitor);
@@ -115,6 +115,21 @@ void PrintVisitor::visit(const FunctionCallNode& node)
   std::cout << indent() << "Name: " << node.getName() << "\n";
   std::cout << indent() << "Arguments:\n";
   auto visitor = PrintVisitor{indentation_ + 1};
+  for(const auto& arg : node.getArguments())
+  {
+    arg->accept(visitor);
+  }
+}
+
+void PrintVisitor::visit(const FunctionResultCallNode& node)
+{
+  std::cout << indent() << "FunctionResultCallNode:\n";
+
+  auto visitor = PrintVisitor{indentation_ + 1};
+  std::cout << indent() << "Function:\n";
+  node.getCall().accept(visitor);
+  
+  std::cout << indent() << "Arguments:\n";
   for(const auto& arg : node.getArguments())
   {
     arg->accept(visitor);

@@ -21,6 +21,7 @@ public:
   void visit(const BlockNode&) override;
   void visit(const FunctionDeclarationNode&) override;
   void visit(const FunctionCallNode&) override;
+  void visit(const FunctionResultCallNode&) override;
   void visit(const FunctionCallStatementNode&) override;
   void visit(const LambdaNode&) override;
   void visit(const LambdaCallNode&) override;

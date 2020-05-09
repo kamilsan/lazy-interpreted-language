@@ -212,6 +212,21 @@ private:
   std::unique_ptr<ExpressionNode> rightOperand_;
 };
 
+class FunctionResultCallNode : public ExpressionNode
+{
+public:
+  FunctionResultCallNode(std::unique_ptr<ExpressionNode> call, std::list<std::unique_ptr<ExpressionNode>> arguments):
+    call_(std::move(call)), arguments_(std::move(arguments)) {}
+
+  const ExpressionNode& getCall() const { return *call_; }
+  const std::list<std::unique_ptr<ExpressionNode>>& getArguments() const { return arguments_; }
+
+  void accept(Visitor& visitor) const override { visitor.visit(*this); }
+private:
+  std::unique_ptr<ExpressionNode> call_;
+  std::list<std::unique_ptr<ExpressionNode>> arguments_;
+};
+
 class FunctionCallNode : public ExpressionNode
 {
 public:

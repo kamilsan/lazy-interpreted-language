@@ -32,7 +32,7 @@ public:
   std::unique_ptr<BlockNode> parseBlock();
   std::unique_ptr<FunctionDeclarationNode> parseFunctionDeclaration();
   std::unique_ptr<LambdaNode> parseLambda();
-  std::unique_ptr<LambdaCallNode> parseLambdaCall(bool lParenSkipped = false);
+  std::unique_ptr<ExpressionNode> parseLambdaCall(bool lParenSkipped = false);
 
 private:
   Tokenizer tokenizer_;

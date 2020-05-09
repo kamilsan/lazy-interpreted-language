@@ -183,7 +183,7 @@ std::unique_ptr<ExpressionNode> Parser::parseTerm()
     tokenizer_.nextToken();
     return std::make_unique<NumericLiteralNode>(std::get<double>(token.value));
   }
-  else if(token.type == TokenType::Identifier)
+  else if(token.type == TokenType::Identifier || Token::isSpecialFunction(token))
   {
     auto identifierToken = token;
     token = tokenizer_.nextToken();
@@ -218,11 +218,27 @@ std::unique_ptr<ExpressionNode> Parser::parseFunctionCall(std::optional<Token> i
   std::string name;
   if(identifierToken.has_value())
     name = std::get<std::string>(identifierToken.value().value);
+  else if(Token::isSpecialFunction(tokenizer_.peek()))
+  {
+    name = std::get<std::string>(tokenizer_.peek().value);
+    tokenizer_.nextToken();
+  }
   else
     name = std::get<std::string>(getToken(TokenType::Identifier, "Expected function name!").value);
   
-  auto arguments = std::move(parseCallArgumentList());
-  return std::make_unique<FunctionCallNode>(name, std::move(arguments));
+  auto arguments = parseCallArgumentList();
+  std::unique_ptr<ExpressionNode> node = std::make_unique<FunctionCallNode>(name, std::move(arguments));
+
+  auto token = tokenizer_.peek();
+  while(token.type == TokenType::LParen)
+  {
+    arguments = parseCallArgumentList();
+    auto func = std::move(node);
+    node = std::make_unique<FunctionResultCallNode>(std::move(func), std::move(arguments));
+    token = tokenizer_.peek();
+  }
+
+  return node;
 }
 
 std::unique_ptr<FunctionCallStatementNode> Parser::parseFunctionCallStatement(std::optional<Token> identifierToken)
@@ -303,7 +319,8 @@ std::unique_ptr<BlockNode> Parser::parseBlock()
   while(token.type == TokenType::KeywordRet || 
     token.type == TokenType::KeywordLet || 
     token.type == TokenType::Identifier ||
-    token.type == TokenType::LParen)
+    token.type == TokenType::LParen ||
+    Token::isSpecialFunction(token))
   {
     if(token.type == TokenType::KeywordRet)
     {
@@ -317,16 +334,16 @@ std::unique_ptr<BlockNode> Parser::parseBlock()
     }
     else if(token.type == TokenType::Identifier)
     {
-      auto indentifierToken = token;
+      auto identifierToken = token;
       token = tokenizer_.nextToken();
       if(Token::isAssigmentOperator(token))
       {
-        auto assignmentNode = parseAssignment(indentifierToken);
+        auto assignmentNode = parseAssignment(identifierToken);
         blockNode->addStatement(std::move(assignmentNode));
       }
       else
       {
-        auto functionCallNode = parseFunctionCallStatement(indentifierToken);
+        auto functionCallNode = parseFunctionCallStatement(identifierToken);
         blockNode->addStatement(std::move(functionCallNode));
       }
     }
@@ -334,6 +351,11 @@ std::unique_ptr<BlockNode> Parser::parseBlock()
     {
       auto lambdaCallNode = parseLambdaCallStatement();
       blockNode->addStatement(std::move(lambdaCallNode));
+    }
+    else if(Token::isSpecialFunction(token))
+    {
+      auto functionCallNode = parseFunctionCallStatement();
+      blockNode->addStatement(std::move(functionCallNode));
     }
     token = tokenizer_.peek();
   }
@@ -367,7 +389,7 @@ std::unique_ptr<LambdaNode> Parser::parseLambda()
   return std::make_unique<LambdaNode>(type, args, std::move(body));
 }
 
-std::unique_ptr<LambdaCallNode> Parser::parseLambdaCall(bool lParenSkipped)
+std::unique_ptr<ExpressionNode> Parser::parseLambdaCall(bool lParenSkipped)
 {
   if(!lParenSkipped)
     expectToken(TokenType::LParen, "Expected open parenthesis!");
@@ -375,8 +397,19 @@ std::unique_ptr<LambdaCallNode> Parser::parseLambdaCall(bool lParenSkipped)
   auto lambda = parseLambda();
   expectToken(TokenType::RParen, "Expected closing parenthesis!");
 
-  auto arguments = std::move(parseCallArgumentList());
-  return std::make_unique<LambdaCallNode>(std::move(lambda), std::move(arguments));
+  auto arguments = parseCallArgumentList();
+  std::unique_ptr<ExpressionNode> node = std::make_unique<LambdaCallNode>(std::move(lambda), std::move(arguments));
+
+  auto token = tokenizer_.peek();
+  while(token.type == TokenType::LParen)
+  {
+    arguments = parseCallArgumentList();
+    auto func = std::move(node);
+    node = std::make_unique<FunctionResultCallNode>(std::move(func), std::move(arguments));
+    token = tokenizer_.peek();
+  }
+
+  return node;
 }
 
 TypeName Parser::parseType()
