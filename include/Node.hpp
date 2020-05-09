@@ -9,14 +9,14 @@
 #include "Token.hpp"
 #include "Visitor.hpp"
 
-enum class UnaryOperation
+enum class UnaryOperator
 {
   BinaryNegation,
   Minus,
   LogicalNot
 };
 
-enum class BinaryOperation
+enum class BinaryOperator
 {
   Addition,
   Subtraction,
@@ -38,7 +38,7 @@ enum class BinaryOperation
   NotEqual
 };
 
-enum class AssignmentOperation
+enum class AssignmentOperator
 {
   Assign,
   PlusEq,
@@ -59,44 +59,44 @@ enum class TypeName
   Void
 };
 
-const std::unordered_map<UnaryOperation, std::string> UnaryOperationNames = {
-  std::make_pair<UnaryOperation, std::string>(UnaryOperation::BinaryNegation, "BinaryNegation"),
-  std::make_pair<UnaryOperation, std::string>(UnaryOperation::Minus, "Minus"),
-  std::make_pair<UnaryOperation, std::string>(UnaryOperation::LogicalNot, "LogicalNot")
+const std::unordered_map<UnaryOperator, std::string> UnaryOperationNames = {
+  std::make_pair<UnaryOperator, std::string>(UnaryOperator::BinaryNegation, "BinaryNegation"),
+  std::make_pair<UnaryOperator, std::string>(UnaryOperator::Minus, "Minus"),
+  std::make_pair<UnaryOperator, std::string>(UnaryOperator::LogicalNot, "LogicalNot")
 };
 
-const std::unordered_map<BinaryOperation, std::string> BinaryOperationNames = {
-  std::make_pair<BinaryOperation, std::string>(BinaryOperation::Addition, "Addition"),
-  std::make_pair<BinaryOperation, std::string>(BinaryOperation::Subtraction, "Subtraction"),
-  std::make_pair<BinaryOperation, std::string>(BinaryOperation::Multiplication, "Multiplication"),
-  std::make_pair<BinaryOperation, std::string>(BinaryOperation::Division, "Division"),
-  std::make_pair<BinaryOperation, std::string>(BinaryOperation::Modulo, "Modulo"),
-  std::make_pair<BinaryOperation, std::string>(BinaryOperation::LogicalAnd, "LogicalAnd"),
-  std::make_pair<BinaryOperation, std::string>(BinaryOperation::LogicalOr, "LogicalOr"),
-  std::make_pair<BinaryOperation, std::string>(BinaryOperation::BinaryAnd, "BinaryAnd"),
-  std::make_pair<BinaryOperation, std::string>(BinaryOperation::BinaryOr, "BinaryOr"),
-  std::make_pair<BinaryOperation, std::string>(BinaryOperation::BinaryXor, "BinaryXor"),
-  std::make_pair<BinaryOperation, std::string>(BinaryOperation::ShiftLeft, "ShiftLeft"),
-  std::make_pair<BinaryOperation, std::string>(BinaryOperation::ShiftRight, "ShiftRight"),
-  std::make_pair<BinaryOperation, std::string>(BinaryOperation::Greater, "Greater"),
-  std::make_pair<BinaryOperation, std::string>(BinaryOperation::GreaterEq, "GreaterEq"),
-  std::make_pair<BinaryOperation, std::string>(BinaryOperation::Less, "Less"),
-  std::make_pair<BinaryOperation, std::string>(BinaryOperation::LessEq, "LessEq"),
-  std::make_pair<BinaryOperation, std::string>(BinaryOperation::Equal, "Equal"),
-  std::make_pair<BinaryOperation, std::string>(BinaryOperation::NotEqual, "NotEqual")
+const std::unordered_map<BinaryOperator, std::string> BinaryOperationNames = {
+  std::make_pair<BinaryOperator, std::string>(BinaryOperator::Addition, "Addition"),
+  std::make_pair<BinaryOperator, std::string>(BinaryOperator::Subtraction, "Subtraction"),
+  std::make_pair<BinaryOperator, std::string>(BinaryOperator::Multiplication, "Multiplication"),
+  std::make_pair<BinaryOperator, std::string>(BinaryOperator::Division, "Division"),
+  std::make_pair<BinaryOperator, std::string>(BinaryOperator::Modulo, "Modulo"),
+  std::make_pair<BinaryOperator, std::string>(BinaryOperator::LogicalAnd, "LogicalAnd"),
+  std::make_pair<BinaryOperator, std::string>(BinaryOperator::LogicalOr, "LogicalOr"),
+  std::make_pair<BinaryOperator, std::string>(BinaryOperator::BinaryAnd, "BinaryAnd"),
+  std::make_pair<BinaryOperator, std::string>(BinaryOperator::BinaryOr, "BinaryOr"),
+  std::make_pair<BinaryOperator, std::string>(BinaryOperator::BinaryXor, "BinaryXor"),
+  std::make_pair<BinaryOperator, std::string>(BinaryOperator::ShiftLeft, "ShiftLeft"),
+  std::make_pair<BinaryOperator, std::string>(BinaryOperator::ShiftRight, "ShiftRight"),
+  std::make_pair<BinaryOperator, std::string>(BinaryOperator::Greater, "Greater"),
+  std::make_pair<BinaryOperator, std::string>(BinaryOperator::GreaterEq, "GreaterEq"),
+  std::make_pair<BinaryOperator, std::string>(BinaryOperator::Less, "Less"),
+  std::make_pair<BinaryOperator, std::string>(BinaryOperator::LessEq, "LessEq"),
+  std::make_pair<BinaryOperator, std::string>(BinaryOperator::Equal, "Equal"),
+  std::make_pair<BinaryOperator, std::string>(BinaryOperator::NotEqual, "NotEqual")
 };
 
-const std::unordered_map<AssignmentOperation, std::string> AssignmentOperationNames = {
-  std::make_pair<AssignmentOperation, std::string>(AssignmentOperation::Assign, "Assign"),
-  std::make_pair<AssignmentOperation, std::string>(AssignmentOperation::PlusEq, "PlusEq"),
-  std::make_pair<AssignmentOperation, std::string>(AssignmentOperation::MinusEq, "MinusEq"),
-  std::make_pair<AssignmentOperation, std::string>(AssignmentOperation::MulEq, "MulEq"),
-  std::make_pair<AssignmentOperation, std::string>(AssignmentOperation::DivEq, "DivEq"),
-  std::make_pair<AssignmentOperation, std::string>(AssignmentOperation::AndEq, "AndEq"),
-  std::make_pair<AssignmentOperation, std::string>(AssignmentOperation::OrEq, "OrEq"),
-  std::make_pair<AssignmentOperation, std::string>(AssignmentOperation::XorEq, "XorEq"),
-  std::make_pair<AssignmentOperation, std::string>(AssignmentOperation::ShiftLeftEq, "ShiftLeftEq"),
-  std::make_pair<AssignmentOperation, std::string>(AssignmentOperation::ShiftRightEq, "ShiftRightEq")
+const std::unordered_map<AssignmentOperator, std::string> AssignmentOperationNames = {
+  std::make_pair<AssignmentOperator, std::string>(AssignmentOperator::Assign, "Assign"),
+  std::make_pair<AssignmentOperator, std::string>(AssignmentOperator::PlusEq, "PlusEq"),
+  std::make_pair<AssignmentOperator, std::string>(AssignmentOperator::MinusEq, "MinusEq"),
+  std::make_pair<AssignmentOperator, std::string>(AssignmentOperator::MulEq, "MulEq"),
+  std::make_pair<AssignmentOperator, std::string>(AssignmentOperator::DivEq, "DivEq"),
+  std::make_pair<AssignmentOperator, std::string>(AssignmentOperator::AndEq, "AndEq"),
+  std::make_pair<AssignmentOperator, std::string>(AssignmentOperator::OrEq, "OrEq"),
+  std::make_pair<AssignmentOperator, std::string>(AssignmentOperator::XorEq, "XorEq"),
+  std::make_pair<AssignmentOperator, std::string>(AssignmentOperator::ShiftLeftEq, "ShiftLeftEq"),
+  std::make_pair<AssignmentOperator, std::string>(AssignmentOperator::ShiftRightEq, "ShiftRightEq")
 };
 
 const std::unordered_map<TypeName, std::string> TypeNameStrings = {
@@ -183,32 +183,32 @@ private:
 class UnaryNode : public ExpressionNode
 {
 public:
-  UnaryNode(const UnaryOperation& unaryOp, std::unique_ptr<ExpressionNode> term):
-    unaryOperation_(unaryOp), term_(std::move(term)) {}
+  UnaryNode(const UnaryOperator& unaryOp, std::unique_ptr<ExpressionNode> term):
+    unaryOperator_(unaryOp), term_(std::move(term)) {}
 
   const ExpressionNode& getTerm() const { return *term_; }
-  const UnaryOperation& getOperation() const { return unaryOperation_; }
+  const UnaryOperator& getOperation() const { return unaryOperator_; }
 
   void accept(Visitor& visitor) const override { visitor.visit(*this); }
 private:
-  UnaryOperation unaryOperation_;
+  UnaryOperator unaryOperator_;
   std::unique_ptr<ExpressionNode> term_;
 };
 
 class BinaryOpNode : public ExpressionNode
 {
 public:
-  BinaryOpNode(std::unique_ptr<ExpressionNode> leftOperand, const BinaryOperation& op, std::unique_ptr<ExpressionNode> rightOperand):
-    leftOperand_(std::move(leftOperand)), operation_(op), rightOperand_(std::move(rightOperand)) {}
+  BinaryOpNode(std::unique_ptr<ExpressionNode> leftOperand, const BinaryOperator& op, std::unique_ptr<ExpressionNode> rightOperand):
+    leftOperand_(std::move(leftOperand)), operator_(op), rightOperand_(std::move(rightOperand)) {}
 
   const ExpressionNode& getLeftOperand() const { return *leftOperand_; }
   const ExpressionNode& getRightOperand() const { return *rightOperand_; }
-  const BinaryOperation& getOperation() const { return operation_; }
+  const BinaryOperator& getOperation() const { return operator_; }
 
   void accept(Visitor& visitor) const override { visitor.visit(*this); }
 private:
   std::unique_ptr<ExpressionNode> leftOperand_;
-  BinaryOperation operation_;
+  BinaryOperator operator_;
   std::unique_ptr<ExpressionNode> rightOperand_;
 };
 
@@ -280,17 +280,17 @@ private:
 class AssignmentNode : public StatementNode
 {
 public:
-  AssignmentNode(const std::string& name, const AssignmentOperation& operation, std::unique_ptr<ExpressionNode> value):
-    name_(name), operation_(operation), value_(std::move(value)) {}
+  AssignmentNode(const std::string& name, const AssignmentOperator& operation, std::unique_ptr<ExpressionNode> value):
+    name_(name), operator_(operation), value_(std::move(value)) {}
 
   const std::string& getName() const { return name_; }
-  const AssignmentOperation& getOperation() const { return operation_; }
+  const AssignmentOperator& getOperation() const { return operator_; }
   const ExpressionNode& getValue() const { return *value_; }
 
   void accept(Visitor& visitor) const override { visitor.visit(*this); }
 private:
   std::string name_;
-  AssignmentOperation operation_;
+  AssignmentOperator operator_;
   std::unique_ptr<ExpressionNode> value_;
 };
 

@@ -3,6 +3,7 @@
 #include <memory>
 #include <list>
 #include <optional>
+#include <functional>
 
 #include "Tokenizer.hpp"
 #include "Node.hpp"
@@ -36,16 +37,22 @@ public:
 private:
   Tokenizer tokenizer_;
 
+  std::unique_ptr<ExpressionNode> 
+  parseExpression(std::function<std::unique_ptr<ExpressionNode>()> parseOperand, 
+    std::function<bool(const Token&)> operatorPredicate);
+
+  TypeName parseType();
   std::unique_ptr<ExpressionNode> parseCallArgument();
   std::list<std::unique_ptr<ExpressionNode>> parseCallArgumentList();
+  std::pair<std::string, TypeName> parseArgument();
   std::list<std::pair<std::string, TypeName>> parseArgumentList();
 
-  void reportError(const std::string& msg);
+  void reportError(const std::string& msg) const;
   void expectToken(TokenType type, const std::string& msg);
   Token getToken(TokenType type, const std::string& msg);
 
-  UnaryOperation unaryOperationFromToken(const Token& token) const;
-  BinaryOperation binaryOperationFromToken(const Token& token) const;
-  AssignmentOperation assignmentOperationFromToken(const Token& token) const;
+  UnaryOperator unaryOperatorFromToken(const Token& token) const;
+  BinaryOperator binaryOperatorFromToken(const Token& token) const;
+  AssignmentOperator assignmentOperatorFromToken(const Token& token) const;
   TypeName typeNameFromToken(const Token& token) const;
 };
