@@ -39,6 +39,7 @@ private:
   std::list<std::unique_ptr<ExpressionNode>> parseCallArgumentList();
   std::list<std::pair<std::string, TypeName>> parseArgumentList();
 
+  void reportError(const std::string& msg);
   void expectToken(TokenType type, const std::string& msg);
   Token getToken(TokenType type, const std::string& msg);
 

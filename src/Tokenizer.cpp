@@ -29,7 +29,7 @@ std::string Tokenizer::makeErrorMessage(std::string err) const
 }
 
 
-Tokenizer::Tokenizer(std::istream& stream): stream_(stream), token_()
+Tokenizer::Tokenizer(std::istream& stream): stream_(stream), token_(stream_.getMark())
 {
   nextToken();
 }
@@ -61,12 +61,12 @@ Token Tokenizer::nextToken()
     else if(tryToGetCompoundToken())
       return token_;
     else if(stream_.peek() == EOF)
-      token_ = Token{};
+      token_ = Token{stream_.getMark()};
     else
       throw std::runtime_error(makeErrorMessage("Unexpected character!"));
   }
   else
-    token_ = Token{};
+    token_ = Token{stream_.getMark()};
 
   return token_;
 }
@@ -108,6 +108,7 @@ bool Tokenizer::tryToSkipSpaces()
 bool Tokenizer::tryToGetNumber()
 {
   std::stringstream ss;
+  const Mark mark = stream_.getMark();
   if(isdigit(stream_.peek()))
   {
     if(stream_.peek() != '0')
@@ -143,7 +144,7 @@ bool Tokenizer::tryToGetNumber()
   try
   {
     const double value = std::stod(ss.str());
-    token_ = Token(TokenType::Number, value);
+    token_ = Token(TokenType::Number, value, mark);
   }
   catch(...)
   {
@@ -155,6 +156,7 @@ bool Tokenizer::tryToGetNumber()
 bool Tokenizer::tryToGetString()
 {
   std::stringstream ss;
+  const Mark mark = stream_.getMark();
   if(stream_.peek() == '\"')
   {
     stream_.advance();
@@ -177,13 +179,14 @@ bool Tokenizer::tryToGetString()
   else
     return false;
 
-  token_ = Token{TokenType::String, ss.str()};
+  token_ = Token{TokenType::String, ss.str(), mark};
   return true;
 }
 
 bool Tokenizer::tryToGetKeywordOrIdentifier()
 {
   std::stringstream ss;
+  const Mark mark = stream_.getMark();
   if(isalpha(stream_.peek()) || stream_.peek() == '_')
   {
     ss << (char)stream_.peek();
@@ -201,47 +204,48 @@ bool Tokenizer::tryToGetKeywordOrIdentifier()
   if(keywords_.find(str) != keywords_.end())
   {
     const auto type = keywordTokenTypes_.at(str);
-    token_ = Token{type, str};
+    token_ = Token{type, str, mark};
   }
   else
-    token_ = Token{TokenType::Identifier, str};
+    token_ = Token{TokenType::Identifier, str, mark};
 
   return true;
 }
 
 bool Tokenizer::tryToGetSingleCharToken()
 {
+  const Mark mark = stream_.getMark();
   switch(stream_.peek())
   {
     case ',':
-      token_ = Token{TokenType::Comma, ","};
+      token_ = Token{TokenType::Comma, ",", mark};
       break;
     case ':':
-      token_ = Token{TokenType::Colon, ":"};
+      token_ = Token{TokenType::Colon, ":", mark};
       break;
     case ';':
-      token_ = Token{TokenType::Semicolon, ";"};
+      token_ = Token{TokenType::Semicolon, ";", mark};
       break;
     case '\\':
-      token_ = Token{TokenType::Backslash, "\\"};
+      token_ = Token{TokenType::Backslash, "\\", mark};
       break;
     case '(':
-      token_ = Token{TokenType::LParen, "("};
+      token_ = Token{TokenType::LParen, "(", mark};
       break;
     case ')':
-      token_ = Token{TokenType::RParen, ")"};
+      token_ = Token{TokenType::RParen, ")", mark};
       break;
     case '{':
-      token_ = Token{TokenType::LBrace, "{"};
+      token_ = Token{TokenType::LBrace, "{", mark};
       break;
     case '}':
-      token_ = Token{TokenType::RBrace, "}"};
+      token_ = Token{TokenType::RBrace, "}", mark};
       break;
     case '%':
-      token_ = Token{TokenType::Modulo, "%"};
+      token_ = Token{TokenType::Modulo, "%", mark};
       break;
     case '~':
-      token_ = Token{TokenType::BinaryNot, "~"};
+      token_ = Token{TokenType::BinaryNot, "~", mark};
       break;
     default:
       return false;
@@ -274,15 +278,16 @@ bool Tokenizer::tryToGetCompoundToken()
 
 bool Tokenizer::simpleOrWithEq(char c, TokenType type, TokenType typeEq)
 {
+  const Mark mark = stream_.getMark();
   if(stream_.peek() == c)
   {
     if(stream_.advance() == '=')
     {
-      token_ = Token{typeEq, std::string(1, c) + "="};
+      token_ = Token{typeEq, std::string(1, c) + "=", mark};
       stream_.advance();
     }
     else
-      token_ = Token{type, std::string(1, c)};
+      token_ = Token{type, std::string(1, c), mark};
   }
   else 
     return false;
@@ -292,20 +297,21 @@ bool Tokenizer::simpleOrWithEq(char c, TokenType type, TokenType typeEq)
 
 bool Tokenizer::simpleWithEqOrDouble(char c, TokenType type, TokenType typeEq, TokenType typeDouble)
 {
+  const Mark mark = stream_.getMark();
   if(stream_.peek() == c)
   {
     if(stream_.advance() == '=')
     {
-      token_ = Token{typeEq, std::string(1, c) + "="};
+      token_ = Token{typeEq, std::string(1, c) + "=", mark};
       stream_.advance();
     }
     else if(stream_.peek() == c)
     {
-      token_ = Token{typeDouble, std::string(2, c)};
+      token_ = Token{typeDouble, std::string(2, c), mark};
       stream_.advance();
     }
     else
-      token_ = Token{type, std::string(1, c)};
+      token_ = Token{type, std::string(1, c), mark};
   }
   else 
     return false;
@@ -316,25 +322,26 @@ bool Tokenizer::simpleWithEqOrDouble(char c, TokenType type, TokenType typeEq, T
 bool Tokenizer::comparisonShiftOrAssignment(char c, TokenType typeComparison, 
     TokenType typeComparisonEq, TokenType typeShift, TokenType typeAssign)
 {
+  const Mark mark = stream_.getMark();
   if(stream_.peek() == c)
   {
     if(stream_.advance() == c)
     {
       if(stream_.advance() == '=')
       {
-        token_ = Token{typeAssign, std::string(2, c) + "="};
+        token_ = Token{typeAssign, std::string(2, c) + "=", mark};
         stream_.advance();
       }
       else
-        token_ = Token{typeShift, std::string(2, c)};
+        token_ = Token{typeShift, std::string(2, c), mark};
     }
     else if(stream_.peek() == '=')
     {
-      token_ = Token{typeComparisonEq, std::string(1, c) + "="};
+      token_ = Token{typeComparisonEq, std::string(1, c) + "=", mark};
       stream_.advance();
     }
     else
-      token_ = Token{typeComparison, std::string(1, c)};
+      token_ = Token{typeComparison, std::string(1, c), mark};
   }
   else
     return false;

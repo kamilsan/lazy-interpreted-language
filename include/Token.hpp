@@ -5,6 +5,8 @@
 #include <variant>
 #include <vector>
 
+#include "Mark.hpp"
+
 enum class TokenType
 {
   Identifier,
@@ -114,9 +116,12 @@ const std::unordered_map<TokenType, std::string> TOKEN_NAMES = {
 
 struct Token
 {
-  Token(): type(TokenType::EOT) {}
-  Token(const TokenType& type, std::string value): type(type), value(value) {}
-  Token(const TokenType& type, double value): type(type), value(value) {}
+  Token(): type(TokenType::EOT), mark() {}
+  Token(const Mark& mark): type(TokenType::EOT), mark(mark) {}
+  Token(const TokenType& type, std::string value, const Mark& mark): 
+    type(type), value(value), mark(mark) {}
+  Token(const TokenType& type, double value, const Mark& mark): 
+    type(type), value(value), mark(mark) {}
 
   bool operator==(const Token& other) const
   {
@@ -144,6 +149,7 @@ struct Token
 
   TokenType type;
   std::variant<std::string, double> value;
+  Mark mark;
 };
 
 inline bool Token::isAssigmentOperator(const Token& token)

@@ -7,13 +7,22 @@
 
 Parser::Parser(std::istream& stream): tokenizer_(stream) {}
 
+void Parser::reportError(const std::string& msg)
+{
+  auto token = tokenizer_.peek();
+  auto mark = token.mark;
+  std::stringstream ss;
+  ss << "ERROR (" << mark.to_string() << "): " << msg;
+  throw std::runtime_error(ss.str());
+}
+
 void Parser::expectToken(TokenType type, const std::string& msg)
 {
   auto token = tokenizer_.peek();
   if(token.type == type)
     tokenizer_.nextToken();
   else
-    throw std::runtime_error(msg);
+    reportError(msg);
 }
 
 Token Parser::getToken(TokenType type, const std::string& msg)
@@ -22,7 +31,7 @@ Token Parser::getToken(TokenType type, const std::string& msg)
   if(token.type == type)
     tokenizer_.nextToken();
   else
-    throw std::runtime_error(msg);
+    reportError(msg);
 
   return token;
 }
@@ -217,7 +226,7 @@ std::unique_ptr<ExpressionNode> Parser::parseTerm()
       return expr;
     }
     else
-      throw std::runtime_error("Expected closing parenthesis!");
+      reportError("Expected closing parenthesis!");
   }
   return nullptr;
 }
@@ -266,7 +275,9 @@ std::unique_ptr<VariableDeclarationNode> Parser::parseVariableDeclaration()
     return std::make_unique<VariableDeclarationNode>(name, type, std::move(value));
   }
   else
-    throw std::runtime_error("Expected type name!");
+    reportError("Expected type name!");
+  
+  return nullptr;
 }
 
 std::unique_ptr<StatementNode> Parser::parseReturnStatement()
@@ -330,7 +341,9 @@ std::unique_ptr<FunctionDeclarationNode> Parser::parseFunctionDeclaration()
     return std::make_unique<FunctionDeclarationNode>(name, type, args, std::move(body));
   }
   else
-    throw std::runtime_error("Expected type name!");
+    reportError("Expected type name!");
+  
+  return nullptr;
 }
 
 std::unique_ptr<LambdaNode> Parser::parseLambda()
@@ -348,7 +361,9 @@ std::unique_ptr<LambdaNode> Parser::parseLambda()
     return std::make_unique<LambdaNode>(type, args, std::move(body));
   }
   else
-    throw std::runtime_error("Expected type name!");
+    reportError("Expected type name!");
+
+  return nullptr;
 }
 
 std::unique_ptr<LambdaCallNode> Parser::parseLambdaCall(bool lParenSkipped)
@@ -416,7 +431,7 @@ std::list<std::pair<std::string, TypeName>> Parser::parseArgumentList()
       token = tokenizer_.nextToken();
     }
     else
-      throw std::runtime_error("Expected type name!");
+      reportError("Expected type name!");
 
     while(token.type == TokenType::Comma)
     {
@@ -432,7 +447,7 @@ std::list<std::pair<std::string, TypeName>> Parser::parseArgumentList()
         token = tokenizer_.nextToken();
       }
       else
-        throw std::runtime_error("Expected type name!");
+        reportError("Expected type name!");
     }
   }
   expectToken(TokenType::RParen, "Expected closing parenthesis!");
