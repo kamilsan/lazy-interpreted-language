@@ -661,7 +661,7 @@ TEST(ParserTest, LambdaInVarDecl)
     std::move(lambda)
   );
 
-  setupTest("let x: function = \\(x: f32): f32 = {}", &Parser::parseVariableDeclaration, std::move(node));
+  setupTest("let x: function = \\(x: f32): void = {};", &Parser::parseVariableDeclaration, std::move(node));
 }
 
 TEST(ParserTest, LambdaAsCallArgument)

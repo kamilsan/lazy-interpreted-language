@@ -263,9 +263,14 @@ std::unique_ptr<VariableDeclarationNode> Parser::parseVariableDeclaration()
   const auto type = parseType();
   expectToken(TokenType::Assign, "Expected assigment operator!");
 
-  auto value = parseLogicalExpression();
-  expectToken(TokenType::Semicolon, "Expected semicolon!");
+  const auto token = tokenizer_.peek();
+  std::unique_ptr<ExpressionNode> value = nullptr;
+  if(token.type == TokenType::Backslash)
+    value = parseLambda();
+  else
+    value = parseLogicalExpression();
 
+  expectToken(TokenType::Semicolon, "Expected semicolon!");
   return std::make_unique<VariableDeclarationNode>(name, type, std::move(value));
 }
 
