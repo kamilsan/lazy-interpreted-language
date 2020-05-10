@@ -2,9 +2,9 @@
 
 #include <cstring>
 #include <exception>
-#include <unordered_map>
 #include <set>
 #include <sstream>
+#include <unordered_map>
 
 const std::set<std::string> Tokenizer::keywords_ = 
   std::set<std::string>{"f32", "if", "print", "fn", "let", "ret", "void", "function"};

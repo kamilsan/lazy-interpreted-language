@@ -10,8 +10,8 @@ Parser::Parser(std::istream& stream): tokenizer_(stream) {}
 [[noreturn]]
 void Parser::reportError(const std::string& msg) const
 {
-  auto token = tokenizer_.peek();
-  auto mark = token.mark;
+  const auto token = tokenizer_.peek();
+  const auto mark = token.mark;
   std::stringstream ss;
   ss << "ERROR (" << mark.to_string() << "): " << msg;
   throw std::runtime_error(ss.str());
@@ -19,7 +19,7 @@ void Parser::reportError(const std::string& msg) const
 
 void Parser::expectToken(TokenType type, const std::string& msg)
 {
-  auto token = tokenizer_.peek();
+  const auto token = tokenizer_.peek();
   if(token.type == type)
     tokenizer_.nextToken();
   else
@@ -28,7 +28,7 @@ void Parser::expectToken(TokenType type, const std::string& msg)
 
 Token Parser::getToken(TokenType type, const std::string& msg)
 {
-  auto token = tokenizer_.peek();
+  const auto token = tokenizer_.peek();
   if(token.type == type)
     tokenizer_.nextToken();
   else
@@ -80,7 +80,7 @@ std::unique_ptr<Node> Parser::parseProgram()
 
 std::unique_ptr<ExpressionNode> Parser::parseStringExpression()
 {
-  auto str = std::get<std::string>(getToken(TokenType::String, "Expected string!").value);
+  const auto str = std::get<std::string>(getToken(TokenType::String, "Expected string!").value);
   std::unique_ptr<ExpressionNode> node = std::make_unique<StringLiteralNode>(str);
 
   auto token = tokenizer_.peek();
@@ -108,7 +108,7 @@ std::unique_ptr<ExpressionNode> Parser::parseStringExpression()
 
 std::unique_ptr<ExpressionNode> Parser::parseLogicalExpression()
 {
-  auto predicate = [](const Token& token) 
+  const auto predicate = [](const Token& token) 
   { 
     return token.type == TokenType::LogicalAnd || 
       token.type == TokenType::LogicalOr; 
@@ -118,11 +118,11 @@ std::unique_ptr<ExpressionNode> Parser::parseLogicalExpression()
 
 std::unique_ptr<ExpressionNode> Parser::parseUnaryLogical()
 {
-  auto token = tokenizer_.peek();
+  const auto token = tokenizer_.peek();
   if(token.type == TokenType::LogicalNot)
   {
     tokenizer_.nextToken();
-    auto op = unaryOperatorFromToken(token);
+    const auto op = unaryOperatorFromToken(token);
     auto comparison = parseComparisonExpression();
     return std::make_unique<UnaryNode>(op, std::move(comparison));
   }
@@ -142,7 +142,7 @@ std::unique_ptr<ExpressionNode> Parser::parseArithmeticExpression()
 
 std::unique_ptr<ExpressionNode> Parser::parseAddExpression()
 {
-  auto predicate = [](const Token& token) 
+  const auto predicate = [](const Token& token) 
   { 
     return token.type == TokenType::Plus ||
       token.type == TokenType::Minus ||
@@ -153,7 +153,7 @@ std::unique_ptr<ExpressionNode> Parser::parseAddExpression()
 
 std::unique_ptr<ExpressionNode> Parser::parseFactor()
 {
-  auto predicate = [](const Token& token) 
+  const auto predicate = [](const Token& token) 
   { 
     return token.type == TokenType::Mul ||
       token.type == TokenType::Div; 
@@ -163,11 +163,11 @@ std::unique_ptr<ExpressionNode> Parser::parseFactor()
 
 std::unique_ptr<ExpressionNode> Parser::parseUnary()
 {
-  auto token = tokenizer_.peek();
+  const auto token = tokenizer_.peek();
   if(token.type == TokenType::Minus || token.type == TokenType::BinaryNot)
   {
     tokenizer_.nextToken();
-    auto op = unaryOperatorFromToken(token);
+    const auto op = unaryOperatorFromToken(token);
     auto term = parseTerm();
     return std::make_unique<UnaryNode>(op, std::move(term));
   }
@@ -185,7 +185,7 @@ std::unique_ptr<ExpressionNode> Parser::parseTerm()
   }
   else if(token.type == TokenType::Identifier || Token::isSpecialFunction(token))
   {
-    auto identifierToken = token;
+    const auto identifierToken = token;
     token = tokenizer_.nextToken();
     if(token.type == TokenType::LParen)
       return parseFunctionCall(identifierToken);
@@ -258,9 +258,9 @@ std::unique_ptr<FunctionCallStatementNode> Parser::parseLambdaCallStatement()
 std::unique_ptr<VariableDeclarationNode> Parser::parseVariableDeclaration()
 {
   expectToken(TokenType::KeywordLet, "Expected variable declaration!");
-  auto name = std::get<std::string>(getToken(TokenType::Identifier, "Expected variable name!").value);
+  const auto name = std::get<std::string>(getToken(TokenType::Identifier, "Expected variable name!").value);
   expectToken(TokenType::Colon, "Expected colon!");
-  auto type = parseType();
+  const auto type = parseType();
   expectToken(TokenType::Assign, "Expected assigment operator!");
 
   auto value = parseLogicalExpression();
@@ -334,7 +334,7 @@ std::unique_ptr<BlockNode> Parser::parseBlock()
     }
     else if(token.type == TokenType::Identifier)
     {
-      auto identifierToken = token;
+      const auto identifierToken = token;
       token = tokenizer_.nextToken();
       if(Token::isAssigmentOperator(token))
       {
@@ -366,11 +366,11 @@ std::unique_ptr<BlockNode> Parser::parseBlock()
 std::unique_ptr<FunctionDeclarationNode> Parser::parseFunctionDeclaration()
 {
   expectToken(TokenType::KeywordFn, "Expected function declaration!");
-  auto name = std::get<std::string>(getToken(TokenType::Identifier, "Expected function name!").value);
-  auto args = parseArgumentList();
+  const auto name = std::get<std::string>(getToken(TokenType::Identifier, "Expected function name!").value);
+  const auto args = parseArgumentList();
 
   expectToken(TokenType::Colon, "Expected colon!");
-  auto type = parseType();
+  const auto type = parseType();
 
   auto body = parseBlock();
   return std::make_unique<FunctionDeclarationNode>(name, type, args, std::move(body));
@@ -379,10 +379,10 @@ std::unique_ptr<FunctionDeclarationNode> Parser::parseFunctionDeclaration()
 std::unique_ptr<LambdaNode> Parser::parseLambda()
 {
   expectToken(TokenType::Backslash, "Expected lambda declaration!");
-  auto args = parseArgumentList();
+  const auto args = parseArgumentList();
   
   expectToken(TokenType::Colon, "Expected colon!");
-  auto type = parseType();
+  const auto type = parseType();
 
   expectToken(TokenType::Assign, "Expected assignment!");
   auto body = parseBlock();
@@ -414,10 +414,10 @@ std::unique_ptr<ExpressionNode> Parser::parseLambdaCall(bool lParenSkipped)
 
 TypeName Parser::parseType()
 {
-  auto token = tokenizer_.peek();
+  const auto token = tokenizer_.peek();
   if(Token::isTypeName(token))
   {
-    auto type = typeNameFromToken(token);
+    const auto type = typeNameFromToken(token);
     tokenizer_.nextToken();
     return type;
   }
@@ -450,7 +450,7 @@ std::list<std::unique_ptr<ExpressionNode>> Parser::parseCallArgumentList()
 
 std::unique_ptr<ExpressionNode> Parser::parseCallArgument()
 {
-  auto token = tokenizer_.peek();
+  const auto token = tokenizer_.peek();
   if(token.type == TokenType::String)
     return parseStringExpression();
   else if(token.type == TokenType::Backslash)
@@ -464,7 +464,7 @@ std::pair<std::string, TypeName> Parser::parseArgument()
   const auto name = 
     std::get<std::string>(getToken(TokenType::Identifier, "Expected argument name!").value);
   expectToken(TokenType::Colon, "Expected colon!");
-  auto type = parseType();
+  const auto type = parseType();
 
   return std::pair<std::string, TypeName>{name, type};
 }
@@ -495,7 +495,7 @@ std::list<std::pair<std::string, TypeName>> Parser::parseArgumentList()
 
 UnaryOperator Parser::unaryOperatorFromToken(const Token& token) const
 {
-  auto type = token.type;
+  const auto type = token.type;
   switch(type)
   {
     case TokenType::Minus:
@@ -511,7 +511,7 @@ UnaryOperator Parser::unaryOperatorFromToken(const Token& token) const
 
 BinaryOperator Parser::binaryOperatorFromToken(const Token& token) const
 {
-  auto type = token.type;
+  const auto type = token.type;
   switch(type)
   {
     case TokenType::Plus:
@@ -557,7 +557,7 @@ BinaryOperator Parser::binaryOperatorFromToken(const Token& token) const
 
 AssignmentOperator Parser::assignmentOperatorFromToken(const Token& token) const
 {
-  auto type = token.type;
+  const auto type = token.type;
   switch(type)
   {
     case TokenType::Assign:
@@ -587,7 +587,7 @@ AssignmentOperator Parser::assignmentOperatorFromToken(const Token& token) const
 
 TypeName Parser::typeNameFromToken(const Token& token) const
 {
-  auto type = token.type;
+  const auto type = token.type;
   switch(type)
   {
     case TokenType::KeywordF32:

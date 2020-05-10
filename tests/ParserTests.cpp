@@ -9,7 +9,7 @@ void setupTest(const std::string& source, std::function<std::unique_ptr<Node>(Pa
 {
   std::stringstream ss{source};
   Parser parser{ss};
-  auto result = function(&parser);
+  const auto result = function(&parser);
 
   std::stringstream outputA{};
   PrintVisitor visitorA{outputA};
@@ -38,7 +38,7 @@ TEST(ParserTest, SimpleTerms)
 
 TEST(ParserTest, FunctionCalls)
 {
-  auto func = std::bind(&Parser::parseFunctionCall, std::placeholders::_1, std::optional<Token>{});
+  const auto func = std::bind(&Parser::parseFunctionCall, std::placeholders::_1, std::optional<Token>{});
   std::list<std::unique_ptr<ExpressionNode>> arguments{};
   setupTest("f()", func, std::make_unique<FunctionCallNode>("f", std::move(arguments)));
 
@@ -55,7 +55,7 @@ TEST(ParserTest, FunctionCalls)
 
 TEST(ParserTest, InvalidFunctionCallsThrow)
 {
-  auto func = std::bind(&Parser::parseFunctionCall, std::placeholders::_1, std::optional<Token>{});
+  const auto func = std::bind(&Parser::parseFunctionCall, std::placeholders::_1, std::optional<Token>{});
   testThrow("f(", func);
   testThrow("f)", func);
   testThrow("f(x,)", func);
@@ -87,7 +87,7 @@ TEST(ParserTest, StringExpressions)
 
 TEST(ParserTest, SpecialFunctionCalls)
 {
-  auto func = std::bind(&Parser::parseFunctionCall, std::placeholders::_1, std::optional<Token>{});
+  const auto func = std::bind(&Parser::parseFunctionCall, std::placeholders::_1, std::optional<Token>{});
   std::list<std::unique_ptr<ExpressionNode>> arguments{};
   arguments.push_back(std::make_unique<StringLiteralNode>("test"));
   setupTest("print(\"test\")", func, std::make_unique<FunctionCallNode>("print", std::move(arguments)));
@@ -439,8 +439,8 @@ TEST(ParserTest, InvalidVariableDeclThrows)
 
 TEST(ParserTest, SimpleAssignment)
 {
-  auto func = std::bind(&Parser::parseAssignment, std::placeholders::_1, std::optional<Token>{});
-  auto test = [func](const std::string& stringOp, AssignmentOperator op) {
+  const auto func = std::bind(&Parser::parseAssignment, std::placeholders::_1, std::optional<Token>{});
+  const auto test = [func](const std::string& stringOp, AssignmentOperator op) {
     auto node = std::make_unique<AssignmentNode>(
       "x",
       op,
@@ -463,7 +463,7 @@ TEST(ParserTest, SimpleAssignment)
 
 TEST(ParserTest, InvalidAssignmentThrows)
 {
-  auto func = std::bind(&Parser::parseAssignment, std::placeholders::_1, std::optional<Token>{});
+  const auto func = std::bind(&Parser::parseAssignment, std::placeholders::_1, std::optional<Token>{});
   testThrow("= 3;", func);
   testThrow("y = ;", func);
   testThrow("y = 3", func);
@@ -629,7 +629,7 @@ TEST(ParserTest, InvalidLambdaDeclarationThrows)
 
 TEST(ParserTest, CallingLambda)
 {
-  auto func = std::bind(&Parser::parseLambdaCall, std::placeholders::_1, false);
+  const auto func = std::bind(&Parser::parseLambdaCall, std::placeholders::_1, false);
   std::list<std::pair<std::string, TypeName>> args{};
   args.push_back(std::make_pair<std::string, TypeName>("x", TypeName::F32));
   auto block = std::make_unique<BlockNode>();
@@ -666,7 +666,7 @@ TEST(ParserTest, LambdaInVarDecl)
 
 TEST(ParserTest, LambdaAsCallArgument)
 {
-  auto func = std::bind(&Parser::parseFunctionCall, std::placeholders::_1, std::optional<Token>{});
+  const auto func = std::bind(&Parser::parseFunctionCall, std::placeholders::_1, std::optional<Token>{});
 
   std::list<std::pair<std::string, TypeName>> args{};
   args.push_back(std::make_pair<std::string, TypeName>("x", TypeName::F32));
@@ -689,7 +689,7 @@ TEST(ParserTest, LambdaAsCallArgument)
 
 TEST(ParserTest, AssignLambda)
 {
-  auto func = std::bind(&Parser::parseAssignment, std::placeholders::_1, std::optional<Token>{});
+  const auto func = std::bind(&Parser::parseAssignment, std::placeholders::_1, std::optional<Token>{});
   std::list<std::pair<std::string, TypeName>> args{};
   args.push_back(std::make_pair<std::string, TypeName>("x", TypeName::F32));
   auto block = std::make_unique<BlockNode>();
@@ -722,7 +722,7 @@ TEST(ParserTest, InvalidLambdaAssignmentThrows)
 
 TEST(ParserTest, CallingFunctionResult)
 {
-  auto func = std::bind(&Parser::parseFunctionCall, std::placeholders::_1, std::optional<Token>{});
+  const auto func = std::bind(&Parser::parseFunctionCall, std::placeholders::_1, std::optional<Token>{});
   std::list<std::unique_ptr<ExpressionNode>> arguments{};
   arguments.push_back(std::make_unique<VariableNode>("x"));
   arguments.push_back(std::make_unique<NumericLiteralNode>(2));

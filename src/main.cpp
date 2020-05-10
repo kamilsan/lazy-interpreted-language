@@ -1,8 +1,8 @@
 #include <fstream>
 #include <iostream>
 
-#include "Parser.hpp"
 #include "Node.hpp"
+#include "Parser.hpp"
 #include "PrintVisitor.hpp"
 
 int main(int argc, char* argv[])

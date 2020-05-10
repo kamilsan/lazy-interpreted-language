@@ -1,10 +1,10 @@
 #pragma once
 
-#include <memory>
-#include <string>
-#include <sstream>
-#include <unordered_map>
 #include <list>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <unordered_map>
 
 #include "Token.hpp"
 #include "Visitor.hpp"

@@ -1,12 +1,12 @@
 #pragma once
 
-#include <memory>
-#include <list>
-#include <optional>
 #include <functional>
+#include <list>
+#include <memory>
+#include <optional>
 
-#include "Tokenizer.hpp"
 #include "Node.hpp"
+#include "Tokenizer.hpp"
 
 class Parser
 {
