@@ -2,20 +2,18 @@
 
 #include "Node.hpp"
 
-#include <iostream>
-
 void PrintVisitor::visit(const ProgramNode& node)
 {
-  std::cout << indent() << "ProgramNode:\n";
-  auto visitor = PrintVisitor{indentation_ + 1};
+  stream_ << indent() << "ProgramNode:\n";
+  auto visitor = PrintVisitor{stream_, indentation_ + 1};
 
-  std::cout << "\nVariables:\n";
+  stream_ << "\nVariables:\n";
   for(const auto& variable : node.getVariables())
   {
     variable->accept(visitor);
   }
 
-  std::cout << "\nFunctions:\n";
+  stream_ << "\nFunctions:\n";
   for(const auto& function : node.getFunctions())
   {
     function->accept(visitor);
@@ -24,69 +22,69 @@ void PrintVisitor::visit(const ProgramNode& node)
 
 void PrintVisitor::visit(const NumericLiteralNode& node)
 {
-  std::cout << indent() << "NumericLiteral: " << node.getValue() << "\n";
+  stream_ << indent() << "NumericLiteral: " << node.getValue() << "\n";
 }
 
 void PrintVisitor::visit(const StringLiteralNode& node)
 {
-  std::cout << indent() << "StringLiteral: " << node.getValue() << "\n";
+  stream_ << indent() << "StringLiteral: " << node.getValue() << "\n";
 }
 
 void PrintVisitor::visit(const VariableNode& node)
 {
-  std::cout << indent() << "Variable: " << node.getName() << "\n";
+  stream_ << indent() << "Variable: " << node.getName() << "\n";
 }
 
 void PrintVisitor::visit(const UnaryNode& node)
 {
-  std::cout << indent() << "Unary: " 
+  stream_ << indent() << "Unary: " 
     << UnaryOperationNames.at(node.getOperation()) << "\n";
-  auto visitor = PrintVisitor{indentation_ + 1};
+  auto visitor = PrintVisitor{stream_, indentation_ + 1};
   node.getTerm().accept(visitor);
 }
 
 void PrintVisitor::visit(const BinaryOpNode& node)
 {
-  std::cout << indent() << "BinaryOpNode:\n";
-  auto visitor = PrintVisitor{indentation_ + 1};
+  stream_ << indent() << "BinaryOpNode:\n";
+  auto visitor = PrintVisitor{stream_, indentation_ + 1};
   node.getLeftOperand().accept(visitor);
-  std::cout << indent() << BinaryOperationNames.at(node.getOperation()) << "\n";
+  stream_ << indent() << BinaryOperationNames.at(node.getOperation()) << "\n";
   node.getRightOperand().accept(visitor);
 }
 
 void PrintVisitor::visit(const VariableDeclarationNode& node)
 {
-  std::cout << indent() << "VariableDeclarationNode (" 
+  stream_ << indent() << "VariableDeclarationNode (" 
     << TypeNameStrings.at(node.getType()) << "):\n";
-  std::cout << indent() << "Name: " << node.getName() << "\n";
-  auto visitor = PrintVisitor{indentation_ + 1};
-  std::cout << indent() << "Value:\n";
+  stream_ << indent() << "Name: " << node.getName() << "\n";
+  auto visitor = PrintVisitor{stream_, indentation_ + 1};
+  stream_ << indent() << "Value:\n";
   node.getValue().accept(visitor);
 }
 
 void PrintVisitor::visit(const AssignmentNode& node)
 {
-  std::cout << indent() << "AssignmentNode:\n";
-  std::cout << indent() << "Name: " << node.getName() << "\n";
-  std::cout << indent() << "Operator: " << 
+  stream_ << indent() << "AssignmentNode:\n";
+  stream_ << indent() << "Name: " << node.getName() << "\n";
+  stream_ << indent() << "Operator: " << 
     AssignmentOperationNames.at(node.getOperation()) << "\n";
 
-  auto visitor = PrintVisitor{indentation_ + 1};
-  std::cout << indent() << "Value:\n";
+  auto visitor = PrintVisitor{stream_, indentation_ + 1};
+  stream_ << indent() << "Value:\n";
   node.getValue().accept(visitor);
 }
 
 void PrintVisitor::visit(const ReturnNode& node)
 {
-  std::cout << indent() << "ReturnNode:\n";
-  auto visitor = PrintVisitor{indentation_ + 1};
+  stream_ << indent() << "ReturnNode:\n";
+  auto visitor = PrintVisitor{stream_, indentation_ + 1};
   node.getValue().accept(visitor);
 }
 
 void PrintVisitor::visit(const BlockNode& node)
 {
-  std::cout << indent() << "BlockNode:\n";
-  auto visitor = PrintVisitor{indentation_ + 1};
+  stream_ << indent() << "BlockNode:\n";
+  auto visitor = PrintVisitor{stream_, indentation_ + 1};
   for(const auto& statement : node.getStatements())
   {
     statement->accept(visitor);
@@ -95,26 +93,26 @@ void PrintVisitor::visit(const BlockNode& node)
 
 void PrintVisitor::visit(const FunctionDeclarationNode& node)
 {
-  std::cout << indent() << "FunctionDeclarationNode (" 
+  stream_ << indent() << "FunctionDeclarationNode (" 
     << TypeNameStrings.at(node.getReturnType()) << "):\n";
-  std::cout << indent() << "Name: " << node.getName() << "\n";
-  std::cout << indent() << "Arguments:\n";
+  stream_ << indent() << "Name: " << node.getName() << "\n";
+  stream_ << indent() << "Arguments:\n";
   for(const auto& arg : node.getArguments())
   {
-    std::cout << indent() << " " << arg.first 
+    stream_ << indent() << " " << arg.first 
       << " (" << TypeNameStrings.at(arg.second) << ")\n";
   }
-  auto visitor = PrintVisitor{indentation_ + 1};
-  std::cout << indent() << "Body:\n";
+  auto visitor = PrintVisitor{stream_, indentation_ + 1};
+  stream_ << indent() << "Body:\n";
   node.getBody().accept(visitor);
 }
 
 void PrintVisitor::visit(const FunctionCallNode& node)
 {
-  std::cout << indent() << "FunctionCallNode:\n";
-  std::cout << indent() << "Name: " << node.getName() << "\n";
-  std::cout << indent() << "Arguments:\n";
-  auto visitor = PrintVisitor{indentation_ + 1};
+  stream_ << indent() << "FunctionCallNode:\n";
+  stream_ << indent() << "Name: " << node.getName() << "\n";
+  stream_ << indent() << "Arguments:\n";
+  auto visitor = PrintVisitor{stream_, indentation_ + 1};
   for(const auto& arg : node.getArguments())
   {
     arg->accept(visitor);
@@ -123,13 +121,13 @@ void PrintVisitor::visit(const FunctionCallNode& node)
 
 void PrintVisitor::visit(const FunctionResultCallNode& node)
 {
-  std::cout << indent() << "FunctionResultCallNode:\n";
+  stream_ << indent() << "FunctionResultCallNode:\n";
 
-  auto visitor = PrintVisitor{indentation_ + 1};
-  std::cout << indent() << "Function:\n";
+  auto visitor = PrintVisitor{stream_, indentation_ + 1};
+  stream_ << indent() << "Function:\n";
   node.getCall().accept(visitor);
   
-  std::cout << indent() << "Arguments:\n";
+  stream_ << indent() << "Arguments:\n";
   for(const auto& arg : node.getArguments())
   {
     arg->accept(visitor);
@@ -138,35 +136,35 @@ void PrintVisitor::visit(const FunctionResultCallNode& node)
 
 void PrintVisitor::visit(const FunctionCallStatementNode& node)
 {
-  std::cout << indent() << "FunctionCallStatementNode:\n";
-  auto visitor = PrintVisitor{indentation_ + 1};
+  stream_ << indent() << "FunctionCallStatementNode:\n";
+  auto visitor = PrintVisitor{stream_, indentation_ + 1};
   node.getFunctionCall().accept(visitor);
 }
 
 void PrintVisitor::visit(const LambdaNode& node)
 {
-  std::cout << indent() << "LambdaNode (" 
+  stream_ << indent() << "LambdaNode (" 
     << TypeNameStrings.at(node.getReturnType()) << "):\n";
-  std::cout << indent() << "Arguments:\n";
+  stream_ << indent() << "Arguments:\n";
   for(const auto& arg : node.getArguments())
   {
-    std::cout << indent() << " " << arg.first 
+    stream_ << indent() << " " << arg.first 
       << " (" << TypeNameStrings.at(arg.second) << ")\n";
   }
-  auto visitor = PrintVisitor{indentation_ + 1};
-  std::cout << indent() << "Body:\n";
+  auto visitor = PrintVisitor{stream_, indentation_ + 1};
+  stream_ << indent() << "Body:\n";
   node.getBody().accept(visitor);
 }
 
 void PrintVisitor::visit(const LambdaCallNode& node)
 {
-  std::cout << indent() << "LambdaCallNode:\n";
-  std::cout << indent() << "Arguments:\n";
-  auto visitor = PrintVisitor{indentation_ + 1};
+  stream_ << indent() << "LambdaCallNode:\n";
+  stream_ << indent() << "Arguments:\n";
+  auto visitor = PrintVisitor{stream_, indentation_ + 1};
   for(const auto& arg : node.getArguments())
   {
     arg->accept(visitor);
   }
-  std::cout << indent() << "Lambda:\n";
+  stream_ << indent() << "Lambda:\n";
   node.getLambda().accept(visitor);
 }

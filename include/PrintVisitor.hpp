@@ -3,11 +3,13 @@
 #include "Visitor.hpp"
 
 #include <string>
+#include <iostream>
 
 class PrintVisitor : public Visitor
 {
 public:
-  PrintVisitor(unsigned int indentation = 0): indentation_(indentation) {}
+  PrintVisitor(std::ostream& stream = std::cout, unsigned int indentation = 0): 
+    stream_(stream), indentation_(indentation) {}
 
   void visit(const ProgramNode&) override;
   void visit(const NumericLiteralNode&) override;
@@ -29,5 +31,6 @@ public:
 private:
   std::string indent() { return std::string(indentation_, ' '); }
 
+  std::ostream& stream_;
   unsigned int indentation_;
 };
