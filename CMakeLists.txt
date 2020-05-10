@@ -42,6 +42,7 @@ add_executable(interpreter
 add_executable(interpreter_tests
   ${PROJECT_CODE}
   tests/TokenizerTests.cpp
+  tests/PrintVisitorTests.cpp
   tests/ParserTests.cpp
   tests/main_test.cpp
 )
