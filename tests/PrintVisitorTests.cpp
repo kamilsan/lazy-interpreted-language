@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <sstream>
 
-#include "Node.hpp"
+#include "AST.hpp"
 #include "PrintVisitor.hpp"
 
 TEST(PrintVisitorTest, NumericLiteral)

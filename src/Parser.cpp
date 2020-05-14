@@ -1,6 +1,6 @@
 #include "Parser.hpp"
 
-#include "Node.hpp"
+#include "AST.hpp"
 #include "PrintVisitor.hpp"
 
 #include <stdexcept>

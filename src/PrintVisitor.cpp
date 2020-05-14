@@ -1,6 +1,6 @@
 #include "PrintVisitor.hpp"
 
-#include "Node.hpp"
+#include "AST.hpp"
 
 void PrintVisitor::visit(const ProgramNode& node)
 {

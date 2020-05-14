@@ -27,8 +27,9 @@ set(PROJECT_CODE
   include/Mark.hpp
   include/Token.hpp
   include/Visitor.hpp
-  include/Node.hpp
+  include/AST.hpp
   src/PrintVisitor.cpp include/PrintVisitor.hpp
+  src/SemanticAnalyser.cpp include/SemanticAnalyser.hpp
   src/Stream.cpp include/Stream.hpp
   src/Tokenizer.cpp include/Tokenizer.hpp
   src/Parser.cpp include/Parser.hpp
@@ -44,6 +45,7 @@ add_executable(interpreter_tests
   tests/TokenizerTests.cpp
   tests/PrintVisitorTests.cpp
   tests/ParserTests.cpp
+  tests/SemanticAnalyserTests.cpp
   tests/main_test.cpp
 )
 

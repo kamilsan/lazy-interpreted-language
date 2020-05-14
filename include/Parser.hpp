@@ -5,7 +5,7 @@
 #include <memory>
 #include <optional>
 
-#include "Node.hpp"
+#include "AST.hpp"
 #include "Tokenizer.hpp"
 
 class Parser

@@ -1,9 +1,9 @@
 #include <fstream>
 #include <iostream>
 
-#include "Node.hpp"
 #include "Parser.hpp"
 #include "PrintVisitor.hpp"
+#include "SemanticAnalyser.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -16,9 +16,21 @@ int main(int argc, char* argv[])
   try
   {
     std::ifstream sourceFile{argv[1]};
+    if(!sourceFile.is_open())
+    {
+      std::cout << "Could not open provided source file!\n";
+      return 0;
+    }
+
     Parser parser{sourceFile};
     PrintVisitor visitor{};
-    parser.parseProgram()->accept(visitor);
+    SemanticAnalyser semantic{};
+    
+    auto program = parser.parseProgram();
+    program->accept(visitor);
+    program->accept(semantic);
+
+    sourceFile.close();
   }
   catch(std::runtime_error& er)
   {
