@@ -2,6 +2,11 @@
 
 void SemanticAnalyser::visit(const AssignmentNode& node) 
 {
+  const auto name = node.getName();
+  const auto it = variables_.find(name);
+  if(it == variables_.end())
+    throw std::runtime_error("ERROR: Assignment to undeclared variable " + name);
+
   node.getValue().accept(*this);
 }
 
@@ -19,7 +24,23 @@ void SemanticAnalyser::visit(const BlockNode& node)
 
 void SemanticAnalyser::visit(const FunctionCallNode& node) 
 {
-  for(const auto& arg : node.getArguments())
+  const auto name = node.getName();
+  const auto it = functions_.find(name);
+  if(it == functions_.end())
+    throw std::runtime_error("ERROR: Calling undefined function named " + name + "!");
+
+  const auto declaredArgs = it->second.first;
+  const auto& callingArgs = node.getArguments();
+
+  const auto nDeclaredArgs = declaredArgs.size();
+  const auto nCallingArgs = callingArgs.size();
+
+  if(nCallingArgs != nDeclaredArgs)
+    throw std::runtime_error("ERROR: Function " + name + " expected " + 
+      std::to_string(nDeclaredArgs) + " but got " + 
+        std::to_string(nCallingArgs) + " arguments!");
+
+  for(const auto& arg : callingArgs)
     arg->accept(*this);
 }
 
@@ -30,6 +51,16 @@ void SemanticAnalyser::visit(const FunctionCallStatementNode& node)
 
 void SemanticAnalyser::visit(const FunctionDeclarationNode& node) 
 {
+  const auto name = node.getName();
+  const auto it = functions_.find(name);
+  if(it != functions_.end())
+    throw std::runtime_error("ERROR: Redefinition of function named " + name + "!");
+
+  
+  const auto args = node.getArguments();
+  const auto func = std::pair<ArgsList, ReturnType>(args, node.getReturnType());
+  functions_.insert(std::pair<std::string, std::pair<ArgsList, ReturnType>>(name, func));
+
   node.getBody().accept(*this);
 }
 
@@ -79,8 +110,8 @@ void SemanticAnalyser::visit(const UnaryNode& node)
 
 void SemanticAnalyser::visit(const VariableDeclarationNode& node) 
 {
-  auto name = node.getName();
-  auto it = variables_.find(name);
+  const auto name = node.getName();
+  const auto it = variables_.find(name);
   if(it != variables_.end())
     throw std::runtime_error("ERROR: Redefinition of variable " + name + "!");
   
@@ -91,8 +122,8 @@ void SemanticAnalyser::visit(const VariableDeclarationNode& node)
 
 void SemanticAnalyser::visit(const VariableNode& node) 
 {
-  auto name = node.getName();
-  auto it = variables_.find(name);
+  const auto name = node.getName();
+  const auto it = variables_.find(name);
   if(it == variables_.end())
     throw std::runtime_error("ERROR: Usage of undeclared variable " + name + "!");
 }

@@ -16,12 +16,25 @@ void throwTest(const std::string& source)
   EXPECT_THROW(node->accept(semantic), std::runtime_error);
 }
 
+// TODO: NO_THROW and redefinition tests
+
 TEST(SemanticAnalyserTest, UndeclaredVariableAccessInDeclarationThrows)
 {
   std::string source = R"SRC(
   fn main(): void
   {
     let x: f32 = 2*y;
+  }
+  )SRC";
+  throwTest(source);
+}
+
+TEST(SemanticAnalyserTest, AssignmentToUndeclaredVariableThrows)
+{
+  std::string source = R"SRC(
+  fn main(): void
+  {
+    x = 2;
   }
   )SRC";
   throwTest(source);
