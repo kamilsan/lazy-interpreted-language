@@ -29,6 +29,7 @@ set(PROJECT_CODE
   include/Visitor.hpp
   include/AST.hpp
   src/PrintVisitor.cpp include/PrintVisitor.hpp
+  src/Symbol.cpp include/Symbol.hpp
   src/SemanticAnalyser.cpp include/SemanticAnalyser.hpp
   src/Stream.cpp include/Stream.hpp
   src/Tokenizer.cpp include/Tokenizer.hpp

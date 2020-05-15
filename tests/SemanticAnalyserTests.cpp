@@ -16,7 +16,64 @@ void throwTest(const std::string& source)
   EXPECT_THROW(node->accept(semantic), std::runtime_error);
 }
 
-// TODO: NO_THROW and redefinition tests
+void nothrowTest(const std::string& source)
+{
+  std::stringstream ss{source};
+  Parser parser{ss};
+
+  auto node = parser.parseProgram();
+  SemanticAnalyser semantic{};
+
+  EXPECT_NO_THROW(node->accept(semantic));
+}
+
+
+TEST(SemanticAnalyserTest, VariableRedefinitionThrows)
+{
+  std::string source = R"SRC(
+  fn main(): void
+  {
+    let x: f32 = 2;
+    let x: f32 = 5;
+  }
+  )SRC";
+  throwTest(source);
+}
+
+TEST(SemanticAnalyserTest, FunctionRedefinitionThrows)
+{
+  std::string source = R"SRC(
+  fn f(x: f32): f32 { ret 1; }
+  fn f(x: f32): f32 { ret x; }
+
+  fn main(): void
+  {
+  }
+  )SRC";
+  throwTest(source);
+}
+
+TEST(SemanticAnalyserTest, BuildInFunctionPrintDefined)
+{
+  std::string source = R"SRC(
+  fn main(): void
+  {
+    print("test");
+  }
+  )SRC";
+  nothrowTest(source);
+}
+
+TEST(SemanticAnalyserTest, BuildInFunctionIfDefined)
+{
+  std::string source = R"SRC(
+  fn main(): void
+  {
+    let x: f32 = if(1 == 1, 1, 0);
+  }
+  )SRC";
+  nothrowTest(source);
+}
 
 TEST(SemanticAnalyserTest, UndeclaredVariableAccessInDeclarationThrows)
 {
@@ -91,6 +148,56 @@ TEST(SemanticAnalyserTest, UndeclaredFunctionCallThrows)
   {
     let x: f32 = 12;
     test(x);
+  }
+  )SRC";
+  throwTest(source);
+}
+
+TEST(SemanticAnalyserTest, UndeclaredFunctionCallInArgumentThrows)
+{
+  std::string source = R"SRC(
+  fn f(): f32 { ret 5; }
+
+  fn main(): void
+  {
+    let x: f32 = 12;
+    f(test(x));
+  }
+  )SRC";
+  throwTest(source);
+}
+
+TEST(SemanticAnalyserTest, UndeclaredFunctionCallInReturnThrows)
+{
+  std::string source = R"SRC(
+  fn f(): f32 { ret test(); }
+
+  fn main(): void
+  {
+  }
+  )SRC";
+  throwTest(source);
+}
+
+
+TEST(SemanticAnalyserTest, UndeclaredFunctionCallInDeclarationThrows)
+{
+  std::string source = R"SRC(
+  fn main(): void
+  {
+    let x: f32 = test(12);
+  }
+  )SRC";
+  throwTest(source);
+}
+
+TEST(SemanticAnalyserTest, UndeclaredFunctionCallInAssignmentThrows)
+{
+  std::string source = R"SRC(
+  fn main(): void
+  {
+    let x: f32 = 42;
+    x = test(12);
   }
   )SRC";
   throwTest(source);

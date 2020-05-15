@@ -2,8 +2,7 @@
 
 #include "AST.hpp"
 #include "Visitor.hpp"
-
-#include <unordered_map>
+#include "Symbol.hpp"
 
 class SemanticAnalyser : public Visitor
 {
@@ -29,9 +28,5 @@ public:
   void visit(const VariableNode&) override;
 
 private:
-  using ReturnType = TypeName;
-  using ArgsList = std::list<std::pair<std::string, TypeName>>;
-
-  std::unordered_map<std::string, TypeName> variables_;
-  std::unordered_map<std::string, std::pair<ArgsList, ReturnType>> functions_;
+  SymbolTable symbols_;
 };
