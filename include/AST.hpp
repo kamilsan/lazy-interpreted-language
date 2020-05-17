@@ -56,7 +56,8 @@ enum class TypeName
 {
   F32,
   Function,
-  Void
+  Void,
+  String
 };
 
 const std::unordered_map<UnaryOperator, std::string> UnaryOperationNames = {
@@ -102,7 +103,8 @@ const std::unordered_map<AssignmentOperator, std::string> AssignmentOperationNam
 const std::unordered_map<TypeName, std::string> TypeNameStrings = {
   std::make_pair<TypeName, std::string>(TypeName::F32, "f32"),
   std::make_pair<TypeName, std::string>(TypeName::Function, "function"),
-  std::make_pair<TypeName, std::string>(TypeName::Void, "void")
+  std::make_pair<TypeName, std::string>(TypeName::Void, "void"),
+  std::make_pair<TypeName, std::string>(TypeName::String, "string")
 };
 
 class Node

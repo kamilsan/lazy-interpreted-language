@@ -1,14 +1,15 @@
 #pragma once
 
-#include "AST.hpp"
 #include "Visitor.hpp"
+#include "AST.hpp"
 #include "Symbol.hpp"
 
-class SemanticAnalyser : public Visitor
+class TypeChecker : public Visitor
 {
 public:
-  SemanticAnalyser();
+  TypeChecker(const SymbolTable& symbols): type_(), symbols_(symbols) {}
 
+  const std::optional<TypeName>& getType() const;
 
   void visit(const AssignmentNode&) override;
   void visit(const BinaryOpNode&) override;
@@ -28,7 +29,6 @@ public:
   void visit(const VariableNode&) override;
 
 private:
-  void addBuildInSymbols();
-
-  SymbolTable symbols_;
+  std::optional<TypeName> type_;
+  const SymbolTable& symbols_;
 };

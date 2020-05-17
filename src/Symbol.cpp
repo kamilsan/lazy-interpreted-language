@@ -1,6 +1,44 @@
 #include "Symbol.hpp"
 
-Symbol::~Symbol() {}
+
+VariableAnalyserVisitor::VariableAnalyserVisitor():
+  symbolValid_(false), type_() {}
+
+void VariableAnalyserVisitor::visit(VariableSymbol& symbol)
+{
+  type_ = symbol.getType();
+  symbolValid_ = true;
+}
+
+void VariableAnalyserVisitor::visit(FunctionSymbol&)
+{
+  symbolValid_ = false;
+}
+
+FunctionAnalyserVisitor::FunctionAnalyserVisitor(const FunctionCallNode& node):
+  node_(node), symbolValid_(false), type_(), errorMsg_() {}
+
+void FunctionAnalyserVisitor::visit(VariableSymbol&)
+{
+  symbolValid_ = false;
+}
+
+void FunctionAnalyserVisitor::visit(FunctionSymbol& symbol)
+{
+  const auto nExpectedArgs = symbol.getArguments().size();
+  const auto nProvidedArgs = node_.getArguments().size(); 
+  if(nExpectedArgs != nProvidedArgs)
+  {
+    errorMsg_ = "Function named " + node_.getName() + " expected " + 
+      std::to_string(nExpectedArgs) + ", but got " + 
+        std::to_string(nProvidedArgs) + " arguments!";
+  }
+  else
+    symbolValid_ = true;
+
+  type_ = symbol.getReturnType();
+}
+
 
 SymbolTable::SymbolTable(): scopes_()
 {

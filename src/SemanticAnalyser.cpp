@@ -1,11 +1,35 @@
 #include "SemanticAnalyser.hpp"
 
+SemanticAnalyser::SemanticAnalyser(): symbols_()
+{
+  addBuildInSymbols();
+}
+
+void SemanticAnalyser::addBuildInSymbols()
+{
+  auto ifSymbol = std::make_unique<FunctionSymbol>("if", TypeName::F32);
+  ifSymbol->addArgument(TypeName::F32);
+  ifSymbol->addArgument(TypeName::F32);
+  ifSymbol->addArgument(TypeName::F32);
+
+  auto printSymbol = std::make_unique<FunctionSymbol>("print", TypeName::Void);
+  printSymbol->addArgument(TypeName::String);
+
+  symbols_.addSymbol("if", std::move(ifSymbol));
+  symbols_.addSymbol("print", std::move(printSymbol));
+}
+
 void SemanticAnalyser::visit(const AssignmentNode& node) 
 {
   const auto name = node.getName();
   const auto symbol = symbols_.lookup(name);
   if(!symbol)
     throw std::runtime_error("ERROR: Assignment to undeclared variable " + name);
+
+  VariableAnalyserVisitor analyser{};
+  symbol.value().get().accept(analyser);
+  if(!analyser.isSymbolValid())
+    throw std::runtime_error("ERROR: Assignment to nonvariable symbol " + name);
 
   node.getValue().accept(*this);
 }
@@ -29,6 +53,11 @@ void SemanticAnalyser::visit(const FunctionCallNode& node)
   if(!symbol)
     throw std::runtime_error("ERROR: Calling undefined function named " + name + "!");
 
+  FunctionAnalyserVisitor analyser{node};
+  symbol.value().get().accept(analyser);
+  if(!analyser.isSymbolValid())
+    throw std::runtime_error("ERROR: " + analyser.getErrorMessage().value());
+
   for(const auto& arg : node.getArguments())
     arg->accept(*this);
 }
@@ -44,10 +73,14 @@ void SemanticAnalyser::visit(const FunctionDeclarationNode& node)
   const auto symbol = symbols_.lookup(name);
   if(symbol)
     throw std::runtime_error("ERROR: Redefinition of function named " + name + "!");
-
-  
+ 
   const auto args = node.getArguments();
-  auto functionSymbol = std::make_unique<FunctionSymbol>(name, node.getReturnType(), args);
+  auto functionSymbol = std::make_unique<FunctionSymbol>(name, node.getReturnType());
+  for(const auto& arg : args)
+  {
+    functionSymbol->addArgument(arg.second);
+  }
+
   symbols_.addSymbol(name, std::move(functionSymbol));
 
   symbols_.enterScope();
@@ -93,6 +126,10 @@ void SemanticAnalyser::visit(const ProgramNode& node)
   
   for(const auto& func : node.getFunctions())
     func->accept(*this);
+
+  const auto symbol = symbols_.lookup("main");
+  if(!symbol)
+    throw std::runtime_error("ERROR: Main function was not found!");
 }
 
 void SemanticAnalyser::visit(const ReturnNode& node) 
@@ -128,4 +165,9 @@ void SemanticAnalyser::visit(const VariableNode& node)
   const auto symbol = symbols_.lookup(name);
   if(!symbol)
     throw std::runtime_error("ERROR: Usage of undeclared variable " + name + "!");
+
+  VariableAnalyserVisitor analyser{};
+  symbol.value().get().accept(analyser);
+  if(!analyser.isSymbolValid())
+    throw std::runtime_error("ERROR: Reference to nonvariable symbol " + name);
 }
