@@ -15,8 +15,8 @@ void VariableAnalyserVisitor::visit(FunctionSymbol&)
   symbolValid_ = false;
 }
 
-FunctionAnalyserVisitor::FunctionAnalyserVisitor(const FunctionCallNode& node):
-  node_(node), symbolValid_(false), type_(), errorMsg_() {}
+FunctionAnalyserVisitor::FunctionAnalyserVisitor():
+  symbolValid_(false), returnType_(), arguments_() {}
 
 void FunctionAnalyserVisitor::visit(VariableSymbol&)
 {
@@ -25,18 +25,9 @@ void FunctionAnalyserVisitor::visit(VariableSymbol&)
 
 void FunctionAnalyserVisitor::visit(FunctionSymbol& symbol)
 {
-  const auto nExpectedArgs = symbol.getArguments().size();
-  const auto nProvidedArgs = node_.getArguments().size(); 
-  if(nExpectedArgs != nProvidedArgs)
-  {
-    errorMsg_ = "Function named " + node_.getName() + " expected " + 
-      std::to_string(nExpectedArgs) + ", but got " + 
-        std::to_string(nProvidedArgs) + " arguments!";
-  }
-  else
-    symbolValid_ = true;
-
-  type_ = symbol.getReturnType();
+  symbolValid_ = true;
+  arguments_ = symbol.getArguments();
+  returnType_ = symbol.getReturnType();
 }
 
 

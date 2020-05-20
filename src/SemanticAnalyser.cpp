@@ -1,5 +1,7 @@
 #include "SemanticAnalyser.hpp"
 
+#include "TypeChecker.hpp"
+
 SemanticAnalyser::SemanticAnalyser(): symbols_()
 {
   addBuildInSymbols();
@@ -29,9 +31,15 @@ void SemanticAnalyser::visit(const AssignmentNode& node)
   VariableAnalyserVisitor analyser{};
   symbol.value().get().accept(analyser);
   if(!analyser.isSymbolValid())
-    throw std::runtime_error("ERROR: Assignment to nonvariable symbol " + name);
+    throw std::runtime_error("ERROR: Assignment to a non-variable symbol " + name);
 
   node.getValue().accept(*this);
+
+  TypeChecker typeChecker{symbols_};
+  node.getValue().accept(typeChecker);
+  if(typeChecker.getType() != analyser.getType())
+    throw std::runtime_error("ERROR: Cannot assign value of type " + 
+      TypeNameStrings.at(typeChecker.getType().value()) + " to variable " + name + "!");
 }
 
 void SemanticAnalyser::visit(const BinaryOpNode& node) 
@@ -53,13 +61,32 @@ void SemanticAnalyser::visit(const FunctionCallNode& node)
   if(!symbol)
     throw std::runtime_error("ERROR: Calling undefined function named " + name + "!");
 
-  FunctionAnalyserVisitor analyser{node};
+  FunctionAnalyserVisitor analyser{};
   symbol.value().get().accept(analyser);
   if(!analyser.isSymbolValid())
-    throw std::runtime_error("ERROR: " + analyser.getErrorMessage().value());
+    throw std::runtime_error("ERROR: Symbol " + name + " does not name a function!");
 
+  const auto expectedArgs = analyser.getArguments();
+  const auto& providedArgs = node.getArguments();
+  const auto nExpectedArgs = expectedArgs.size();
+  const auto nProvidedArgs = providedArgs.size();
+
+  if(nExpectedArgs != nProvidedArgs)
+    throw std::runtime_error("ERROR: Function " + name + " expected " +
+      std::to_string(nExpectedArgs) + ", but got " + std::to_string(nProvidedArgs) + " arguments!");
+
+  auto expectedArgsIt = expectedArgs.begin();
   for(const auto& arg : node.getArguments())
+  {
     arg->accept(*this);
+
+    TypeChecker typeChecker{symbols_};
+    arg->accept(typeChecker);
+    if(typeChecker.getType() != *expectedArgsIt)
+      throw std::runtime_error("ERROR: Function expected other type!");
+    
+    expectedArgsIt++;
+  }
 }
 
 void SemanticAnalyser::visit(const FunctionCallStatementNode& node) 
@@ -130,6 +157,11 @@ void SemanticAnalyser::visit(const ProgramNode& node)
   const auto symbol = symbols_.lookup("main");
   if(!symbol)
     throw std::runtime_error("ERROR: Main function was not found!");
+  
+  FunctionAnalyserVisitor analyser{};
+  symbol.value().get().accept(analyser);
+  if(!analyser.isSymbolValid())
+    throw std::runtime_error("ERROR: Symbol main does not name a function!");
 }
 
 void SemanticAnalyser::visit(const ReturnNode& node) 
@@ -154,6 +186,12 @@ void SemanticAnalyser::visit(const VariableDeclarationNode& node)
     throw std::runtime_error("ERROR: Redefinition of variable " + name + "!");
   
   node.getValue().accept(*this);
+
+  TypeChecker typeChecker{symbols_};
+  node.getValue().accept(typeChecker);
+  if(typeChecker.getType() != node.getType())
+    throw std::runtime_error("ERROR: Cannot assign value of type " + 
+      TypeNameStrings.at(typeChecker.getType().value()) + " to variable " + name + "!");
 
   auto variableSymbol = std::make_unique<VariableSymbol>(name, node.getType());
   symbols_.addSymbol(name, std::move(variableSymbol));

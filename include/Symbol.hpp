@@ -38,19 +38,18 @@ private:
 class FunctionAnalyserVisitor: public SymbolVisitor
 {
 public:
-  FunctionAnalyserVisitor(const FunctionCallNode& node);
+  FunctionAnalyserVisitor();
 
   bool isSymbolValid() const { return symbolValid_; }
-  std::optional<TypeName> getType() const { return type_; }
-  const std::optional<std::string>& getErrorMessage() const { return errorMsg_; }
+  std::optional<TypeName> getReturnType() const { return returnType_; }
+  const std::list<TypeName>& getArguments() const { return arguments_; }
 
   void visit(VariableSymbol&) override;
   void visit(FunctionSymbol&) override;
 private:
-  const FunctionCallNode& node_;
   bool symbolValid_;
-  TypeName type_;
-  std::optional<std::string> errorMsg_;
+  std::optional<TypeName> returnType_;
+  std::list<TypeName> arguments_;
 };
 
 class Symbol

@@ -40,9 +40,9 @@ void TypeChecker::visit(const FunctionCallNode& node)
 {
   auto name = node.getName();
   auto& symbol = symbols_.lookup(name).value().get();
-  FunctionAnalyserVisitor analyser{node};
+  FunctionAnalyserVisitor analyser{};
   symbol.accept(analyser);
-  type_ = analyser.getType().value();
+  type_ = analyser.getReturnType();
 }
 
 void TypeChecker::visit(const FunctionCallStatementNode&)
