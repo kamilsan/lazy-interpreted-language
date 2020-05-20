@@ -31,10 +31,12 @@ void nothrowTest(const std::string& source)
 TEST(SemanticAnalyserTest, VariableRedefinitionThrows)
 {
   std::string source = R"SRC(
-  fn main(): void
+  fn main(): f32
   {
     let x: f32 = 2;
     let x: f32 = 5;
+
+    ret 0;
   }
   )SRC";
   throwTest(source);
@@ -46,8 +48,9 @@ TEST(SemanticAnalyserTest, FunctionRedefinitionThrows)
   fn f(x: f32): f32 { ret 1; }
   fn f(x: f32): f32 { ret x; }
 
-  fn main(): void
+  fn main(): f32
   {
+    ret 0;
   }
   )SRC";
   throwTest(source);
@@ -56,9 +59,10 @@ TEST(SemanticAnalyserTest, FunctionRedefinitionThrows)
 TEST(SemanticAnalyserTest, BuildInFunctionPrintDefined)
 {
   std::string source = R"SRC(
-  fn main(): void
+  fn main(): f32
   {
     print("test");
+    ret 0;
   }
   )SRC";
   nothrowTest(source);
@@ -67,9 +71,10 @@ TEST(SemanticAnalyserTest, BuildInFunctionPrintDefined)
 TEST(SemanticAnalyserTest, BuildInFunctionIfDefined)
 {
   std::string source = R"SRC(
-  fn main(): void
+  fn main(): f32
   {
     let x: f32 = if(1 == 1, 1, 0);
+    ret 0;
   }
   )SRC";
   nothrowTest(source);
@@ -78,9 +83,10 @@ TEST(SemanticAnalyserTest, BuildInFunctionIfDefined)
 TEST(SemanticAnalyserTest, UndeclaredVariableAccessInDeclarationThrows)
 {
   std::string source = R"SRC(
-  fn main(): void
+  fn main(): f32
   {
     let x: f32 = 2*y;
+    ret 0;
   }
   )SRC";
   throwTest(source);
@@ -89,9 +95,10 @@ TEST(SemanticAnalyserTest, UndeclaredVariableAccessInDeclarationThrows)
 TEST(SemanticAnalyserTest, AssignmentToUndeclaredVariableThrows)
 {
   std::string source = R"SRC(
-  fn main(): void
+  fn main(): f32
   {
     x = 2;
+    ret 0;
   }
   )SRC";
   throwTest(source);
@@ -100,10 +107,11 @@ TEST(SemanticAnalyserTest, AssignmentToUndeclaredVariableThrows)
 TEST(SemanticAnalyserTest, UndeclaredVariableAccessInAssignmentThrows)
 {
   std::string source = R"SRC(
-  fn main(): void
+  fn main(): f32
   {
     let x: f32 = 42;
     x = 2*y;
+    ret 0;
   }
   )SRC";
   throwTest(source);
@@ -117,10 +125,11 @@ TEST(SemanticAnalyserTest, UndeclaredVariableAccessInArgumentThrows)
     print("x = " : x : " y = " : y);
   }
   
-  fn main(): void
+  fn main(): f32
   {
     let x: f32 = 12;
     test(x, y);
+    ret 0;
   }
   )SRC";
   throwTest(source);
@@ -134,8 +143,9 @@ TEST(SemanticAnalyserTest, UndeclaredVariableInReturnThrows)
     ret x;
   }
 
-  fn main(): void
+  fn main(): f32
   {
+    ret 0;
   }
   )SRC";
   throwTest(source);
@@ -144,10 +154,11 @@ TEST(SemanticAnalyserTest, UndeclaredVariableInReturnThrows)
 TEST(SemanticAnalyserTest, UndeclaredFunctionCallThrows)
 {
   std::string source = R"SRC(
-  fn main(): void
+  fn main(): f32
   {
     let x: f32 = 12;
     test(x);
+    ret 0;
   }
   )SRC";
   throwTest(source);
@@ -158,10 +169,11 @@ TEST(SemanticAnalyserTest, UndeclaredFunctionCallInArgumentThrows)
   std::string source = R"SRC(
   fn f(): f32 { ret 5; }
 
-  fn main(): void
+  fn main(): f32
   {
     let x: f32 = 12;
     f(test(x));
+    ret 0;
   }
   )SRC";
   throwTest(source);
@@ -172,8 +184,9 @@ TEST(SemanticAnalyserTest, UndeclaredFunctionCallInReturnThrows)
   std::string source = R"SRC(
   fn f(): f32 { ret test(); }
 
-  fn main(): void
+  fn main(): f32
   {
+    ret 0;
   }
   )SRC";
   throwTest(source);
@@ -183,9 +196,10 @@ TEST(SemanticAnalyserTest, UndeclaredFunctionCallInReturnThrows)
 TEST(SemanticAnalyserTest, UndeclaredFunctionCallInDeclarationThrows)
 {
   std::string source = R"SRC(
-  fn main(): void
+  fn main(): f32
   {
     let x: f32 = test(12);
+    ret 0;
   }
   )SRC";
   throwTest(source);
@@ -194,10 +208,11 @@ TEST(SemanticAnalyserTest, UndeclaredFunctionCallInDeclarationThrows)
 TEST(SemanticAnalyserTest, UndeclaredFunctionCallInAssignmentThrows)
 {
   std::string source = R"SRC(
-  fn main(): void
+  fn main(): f32
   {
     let x: f32 = 42;
     x = test(12);
+    ret 0;
   }
   )SRC";
   throwTest(source);
@@ -211,10 +226,11 @@ TEST(SemanticAnalyserTest, MissingFunctionArgumentInCallThrows)
     ret x + y;
   }
 
-  fn main(): void
+  fn main(): f32
   {
     let x: f32 = 12;
     test(x);
+    ret 0;
   }
   )SRC";
   throwTest(source);
@@ -228,9 +244,10 @@ TEST(SemanticAnalyserTest, ToManyFunctionArgumentInCallThrows)
     ret x + y;
   }
 
-  fn main(): void
+  fn main(): f32
   {
     test(1, 2, 3);
+    ret 0;
   }
   )SRC";
   throwTest(source);
@@ -245,9 +262,10 @@ TEST(SemanticAnalyserTest, CallArgumentTypeMismatchThrows)
     f();
   }
 
-  fn main(): void
+  fn main(): f32
   {
     callTwice(12);
+    ret 0;
   }
   )SRC";
   throwTest(source);
@@ -261,9 +279,10 @@ TEST(SemanticAnalyserTest, CallArgumentTypeMismatchThrows2)
     ret x+1;
   }
 
-  fn main(): void
+  fn main(): f32
   {
     addOne(\(x:f32):f32 = { ret x; });
+    ret 0;
   }
   )SRC";
   throwTest(source);
@@ -277,9 +296,9 @@ TEST(SemanticAnalyserTest, VoidFunctionReturningValueThrows)
     ret 12;
   }
 
-  fn main(): void
+  fn main(): f32
   {
-    
+    ret 0;
   }
   )SRC";
   throwTest(source);
@@ -292,9 +311,9 @@ TEST(SemanticAnalyserTest, MissingReturnThrows)
   {
   }
 
-  fn main(): void
+  fn main(): f32
   {
-    
+   ret 0; 
   }
   )SRC";
   throwTest(source);
@@ -303,7 +322,7 @@ TEST(SemanticAnalyserTest, MissingReturnThrows)
 TEST(SemanticAnalyserTest, VariableDeclarationTypeMismatchThrows)
 {
   std::string source = R"SRC(
-  fn main(): void
+  fn main(): f32
   {
     let x: f32 = \(x: f32): void = { };
   }
@@ -314,9 +333,10 @@ TEST(SemanticAnalyserTest, VariableDeclarationTypeMismatchThrows)
 TEST(SemanticAnalyserTest, VariableDeclarationTypeMismatchThrows2)
 {
   std::string source = R"SRC(
-  fn main(): void
+  fn main(): f32
   {
     let x: function = 12;
+    ret 0;
   }
   )SRC";
   throwTest(source);
@@ -330,9 +350,10 @@ TEST(SemanticAnalyserTest, VariableDeclarationTypeMismatchThrows3)
     ret \(x: f32): void = { };
   }
   
-  fn main(): void
+  fn main(): f32
   {
     let x: f32 = f();
+    ret 0;
   }
   )SRC";
   throwTest(source);
@@ -346,9 +367,10 @@ TEST(SemanticAnalyserTest, VariableDeclarationTypeMismatchThrows4)
     ret 12;
   }
   
-  fn main(): void
+  fn main(): f32
   {
     let x: function = f();
+    ret 0;
   }
   )SRC";
   throwTest(source);
@@ -357,7 +379,7 @@ TEST(SemanticAnalyserTest, VariableDeclarationTypeMismatchThrows4)
 TEST(SemanticAnalyserTest, VariableAssignmentTypeMismatchThrows)
 {
   std::string source = R"SRC(
-  fn main(): void
+  fn main(): f32
   {
     let x: f32 = 42;
     x = \(x: f32): void = { };
@@ -369,10 +391,11 @@ TEST(SemanticAnalyserTest, VariableAssignmentTypeMismatchThrows)
 TEST(SemanticAnalyserTest, VariableAssignmentTypeMismatchThrows2)
 {
   std::string source = R"SRC(
-  fn main(): void
+  fn main(): f32
   {
     let x: function = \(x: f32): void = { };
     x = 12;
+    ret 0;
   }
   )SRC";
   throwTest(source);
@@ -386,10 +409,11 @@ TEST(SemanticAnalyserTest, VariableAssignmentTypeMismatchThrows3)
     ret \(x: f32): void = { };
   }
   
-  fn main(): void
+  fn main(): f32
   {
     let x: f32 = 12;
     x = f();
+    ret 0;
   }
   )SRC";
   throwTest(source);
@@ -403,10 +427,11 @@ TEST(SemanticAnalyserTest, VariableAssignmentTypeMismatchThrows4)
     ret 12;
   }
   
-  fn main(): void
+  fn main(): f32
   {
     let x: function = \(x: f32): void = { };
     x = f();
+    ret 0;
   }
   )SRC";
   throwTest(source);

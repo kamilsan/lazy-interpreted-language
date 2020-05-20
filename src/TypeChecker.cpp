@@ -105,5 +105,15 @@ void TypeChecker::visit(const VariableNode& node)
   auto& symbol = symbols_.lookup(name).value().get();
   VariableAnalyserVisitor analyser{};
   symbol.accept(analyser);
-  type_ = analyser.getType().value();
+  if(analyser.isSymbolValid())
+    type_ = analyser.getType().value();
+  else
+  {
+    FunctionAnalyserVisitor analyser{};
+    symbol.accept(analyser);
+    if(analyser.isSymbolValid())
+      type_ = TypeName::Function;
+    else
+      throw std::runtime_error("ERROR: Invalid symbol reference!");
+  }
 }

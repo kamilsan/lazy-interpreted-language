@@ -2,7 +2,7 @@
 
 #include "TypeChecker.hpp"
 
-SemanticAnalyser::SemanticAnalyser(): symbols_()
+SemanticAnalyser::SemanticAnalyser(): symbols_(), hasReturn_()
 {
   addBuildInSymbols();
 }
@@ -83,7 +83,9 @@ void SemanticAnalyser::visit(const FunctionCallNode& node)
     TypeChecker typeChecker{symbols_};
     arg->accept(typeChecker);
     if(typeChecker.getType() != *expectedArgsIt)
-      throw std::runtime_error("ERROR: Function expected other type!");
+      throw std::runtime_error("ERROR: Function " + name + " expected argument of type " + 
+        TypeNameStrings.at(*expectedArgsIt) + ", but got " + 
+          TypeNameStrings.at(typeChecker.getType().value()) + "!");
     
     expectedArgsIt++;
   }
@@ -110,13 +112,23 @@ void SemanticAnalyser::visit(const FunctionDeclarationNode& node)
 
   symbols_.addSymbol(name, std::move(functionSymbol));
 
+  hasReturn_.push(false);
   symbols_.enterScope();
+
   for(const auto& arg: args)
   {
     symbols_.addSymbol(arg.first, std::make_unique<VariableSymbol>(arg.first, arg.second));
   }
+
   node.getBody().accept(*this);
+  
   symbols_.leaveScope();
+  const bool returns = hasReturn_.top();
+  hasReturn_.pop();
+  if(node.getReturnType() != TypeName::Void && !returns)
+    throw std::runtime_error("ERROR: Function " + name + " does not return any value!");
+  else if(node.getReturnType() == TypeName::Void && returns)
+    throw std::runtime_error("ERROR: Void function " + name + " does return!");
 }
 
 void SemanticAnalyser::visit(const FunctionResultCallNode& node) 
@@ -127,20 +139,54 @@ void SemanticAnalyser::visit(const FunctionResultCallNode& node)
 
 void SemanticAnalyser::visit(const LambdaCallNode& node) 
 {
-  node.getLambda().accept(*this);
-  for(const auto& arg : node.getArguments())
+  const auto& lambda = node.getLambda();
+  const auto& expectedArguments = lambda.getArguments();
+  const auto& providedArguments = node.getArguments();
+  const auto nExpectedArgs = expectedArguments.size();
+  const auto nProvidedArgs = providedArguments.size();
+
+  lambda.accept(*this);
+
+  if(nExpectedArgs != nProvidedArgs)
+    throw std::runtime_error("ERROR: Lambda expected " +
+      std::to_string(nExpectedArgs) + ", but got " + std::to_string(nProvidedArgs) + " arguments!");
+
+
+  auto expectedArgumentIt = expectedArguments.begin();
+  for(const auto& arg : providedArguments)
+  {
     arg->accept(*this);
+
+    TypeChecker typeChecker{symbols_};
+    arg->accept(typeChecker);
+    if(typeChecker.getType() != expectedArgumentIt->second)
+      throw std::runtime_error("ERROR: Lambda expected argument of type " + 
+        TypeNameStrings.at(expectedArgumentIt->second) + ", but got " + 
+          TypeNameStrings.at(typeChecker.getType().value()) + "!");
+
+    expectedArgumentIt++;
+  }
 }
 
 void SemanticAnalyser::visit(const LambdaNode& node) 
 {
+  hasReturn_.push(false);
   symbols_.enterScope();
-  for(const auto& arg: node.getArguments())
+
+  for(const auto& arg : node.getArguments())
   {
     symbols_.addSymbol(arg.first, std::make_unique<VariableSymbol>(arg.first, arg.second));
   }
+
   node.getBody().accept(*this);
+
   symbols_.leaveScope();
+  const auto returns = hasReturn_.top();
+  hasReturn_.pop();
+  if(node.getReturnType() != TypeName::Void && !returns)
+    throw std::runtime_error("ERROR: Lambda does not return any value!");
+  else if(node.getReturnType() == TypeName::Void && returns)
+    throw std::runtime_error("ERROR: Void lambda returns!");
 }
 
 void SemanticAnalyser::visit(const NumericLiteralNode&) 
@@ -162,11 +208,14 @@ void SemanticAnalyser::visit(const ProgramNode& node)
   symbol.value().get().accept(analyser);
   if(!analyser.isSymbolValid())
     throw std::runtime_error("ERROR: Symbol main does not name a function!");
+  else if(analyser.getReturnType() != TypeName::F32)
+    throw std::runtime_error("ERROR: Main should return F32!");
 }
 
 void SemanticAnalyser::visit(const ReturnNode& node) 
 {
   node.getValue().accept(*this);
+  hasReturn_.top() = true;
 }
 
 void SemanticAnalyser::visit(const StringLiteralNode&) 
@@ -202,10 +251,5 @@ void SemanticAnalyser::visit(const VariableNode& node)
   const auto name = node.getName();
   const auto symbol = symbols_.lookup(name);
   if(!symbol)
-    throw std::runtime_error("ERROR: Usage of undeclared variable " + name + "!");
-
-  VariableAnalyserVisitor analyser{};
-  symbol.value().get().accept(analyser);
-  if(!analyser.isSymbolValid())
-    throw std::runtime_error("ERROR: Reference to nonvariable symbol " + name);
+    throw std::runtime_error("ERROR: Usage of undeclared symbol " + name + "!");
 }

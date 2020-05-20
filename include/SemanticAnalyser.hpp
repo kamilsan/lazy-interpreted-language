@@ -4,6 +4,8 @@
 #include "Visitor.hpp"
 #include "Symbol.hpp"
 
+#include <stack>
+
 class SemanticAnalyser : public Visitor
 {
 public:
@@ -31,4 +33,5 @@ private:
   void addBuildInSymbols();
 
   SymbolTable symbols_;
+  std::stack<bool> hasReturn_;
 };
