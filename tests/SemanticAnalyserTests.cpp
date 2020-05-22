@@ -42,6 +42,20 @@ TEST(SemanticAnalyserTest, VariableRedefinitionThrows)
   throwTest(source);
 }
 
+TEST(SemanticAnalyserTest, VariableDefinitionsWork)
+{
+  std::string source = R"SRC(
+  fn main(): f32
+  {
+    let x: f32 = 2;
+    let y: f32 = 5;
+
+    ret 0;
+  }
+  )SRC";
+  nothrowTest(source);
+}
+
 TEST(SemanticAnalyserTest, FunctionRedefinitionThrows)
 {
   std::string source = R"SRC(
@@ -54,6 +68,37 @@ TEST(SemanticAnalyserTest, FunctionRedefinitionThrows)
   }
   )SRC";
   throwTest(source);
+}
+
+TEST(SemanticAnalyserTest, FunctionDefinitionsThrows)
+{
+  std::string source = R"SRC(
+  fn f(x: f32): f32 { ret 1; }
+  fn g(x: f32, y: f32): f32 { ret x + y; }
+
+  fn main(): f32
+  {
+    ret 0;
+  }
+  )SRC";
+  nothrowTest(source);
+}
+
+TEST(SemanticAnalyserTest, ShadowingWorks)
+{
+  std::string source = R"SRC(
+  
+  let test: function = \(x: f32): f32 = { ret x + 1; };
+
+  fn main(): f32
+  {
+    let test: f32 = 12;
+    let x: f32 = 12 * test;
+
+    ret 0;
+  }
+  )SRC";
+  nothrowTest(source);
 }
 
 TEST(SemanticAnalyserTest, BuildInFunctionPrintDefined)
@@ -87,6 +132,34 @@ TEST(SemanticAnalyserTest, UndeclaredVariableAccessInDeclarationThrows)
   {
     let x: f32 = 2*y;
     ret 0;
+  }
+  )SRC";
+  throwTest(source);
+}
+
+TEST(SemanticAnalyserTest, VariableAccessWorks)
+{
+  std::string source = R"SRC(
+  let global: f32 = 23;
+  
+  fn main(): f32
+  {
+    let x: f32 = 2*global;
+    let y: f32 = x;
+    ret 0;
+  }
+  )SRC";
+  nothrowTest(source);
+}
+
+TEST(SemanticAnalyserTest, AssignmentWorks)
+{
+  std::string source = R"SRC(
+  fn main(): f32
+  {
+    let x: f32 = 2;
+    x = 1;
+    x += 2;
   }
   )SRC";
   throwTest(source);
@@ -133,6 +206,25 @@ TEST(SemanticAnalyserTest, UndeclaredVariableAccessInArgumentThrows)
   }
   )SRC";
   throwTest(source);
+}
+
+TEST(SemanticAnalyserTest, VariableAccessInArgumentWorks)
+{
+  std::string source = R"SRC(
+  fn test(x: f32, y: f32): void
+  {
+    print("x = " : x : " y = " : y);
+  }
+  
+  fn main(): f32
+  {
+    let x: f32 = 12;
+    let y: f32 = 14;
+    test(x, y);
+    ret 0;
+  }
+  )SRC";
+  nothrowTest(source);
 }
 
 TEST(SemanticAnalyserTest, UndeclaredVariableInReturnThrows)
@@ -443,6 +535,115 @@ TEST(SemanticAnalyserTest, MissingMainThrows)
   fn test(): void
   {
     print("Test");
+  }
+  )SRC";
+  throwTest(source);
+}
+
+TEST(SemanticAnalyserTest, InvalidFunctionResultCallThrows)
+{
+  std::string source = R"SRC(
+  fn f(x: f32, y: f32): f32
+  {
+    ret x + y;
+  }
+  
+  fn main(): f32
+  {
+    f(1, 2)(23, 5);
+    ret 0;
+  }
+  )SRC";
+  throwTest(source);
+}
+
+TEST(SemanticAnalyserTest, InvalidLambdaResultCallThrows)
+{
+  std::string source = R"SRC(  
+  fn main(): f32
+  {
+    (\(x: f32): function = { ret 12; })(1);
+    ret 0;
+  }
+  )SRC";
+  throwTest(source);
+}
+
+TEST(SemanticAnalyserTest, InvalidVariableCallThrows)
+{
+  std::string source = R"SRC(  
+  fn main(): f32
+  {
+    let x: f32 = 2*2 - 4;
+    x(1, 2);
+    ret 0;
+  }
+  )SRC";
+  throwTest(source);
+}
+
+TEST(SemanticAnalyserTest, FunctionResultCallWorks)
+{
+  std::string source = R"SRC(
+  fn f(x: f32): function
+  {
+    ret \(m: f32): f32 = { ret x*m; };
+  }
+  
+  fn main(): f32
+  {
+    f(1)(23);
+    ret 0;
+  }
+  )SRC";
+  nothrowTest(source);
+}
+
+TEST(SemanticAnalyserTest, LambdaResultCallWorks)
+{
+  std::string source = R"SRC(  
+  fn main(): f32
+  {
+    (\(x: f32): function = { ret \(m: f32): f32 = { ret 2; }; })(1)(2);
+    ret 0;
+  }
+  )SRC";
+  nothrowTest(source);
+}
+
+TEST(SemanticAnalyserTest, VariableCallWorks)
+{
+  std::string source = R"SRC(  
+  fn main(): f32
+  {
+    let x: function = print;
+    print("test");
+    ret 0;
+  }
+  )SRC";
+  nothrowTest(source);
+}
+
+TEST(SemanticAnalyserTest, InvalidUnaryOperationsThrow)
+{
+  std::string source = R"SRC(  
+  fn main(): f32
+  {
+    let x: function = print;
+    let t: function = -print;
+  }
+  )SRC";
+  throwTest(source);
+}
+
+TEST(SemanticAnalyserTest, InvalidBinaryOperationsThrow)
+{
+  std::string source = R"SRC(  
+  fn main(): f32
+  {
+    let x: function = \(x: f32): f32 = { ret x; };
+    let y: f32 = 12;
+    let z: f32 = y + x;
   }
   )SRC";
   throwTest(source);
