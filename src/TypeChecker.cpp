@@ -15,7 +15,7 @@ void TypeChecker::visit(const BinaryOpNode& node)
   node.getLeftOperand().accept(checker);  
   auto leftType = checker.getType().value();
 
-  node.getRightOperand().accept(checker);  
+  node.getRightOperand().accept(checker);
   auto rightType = checker.getType().value();
 
   if(leftType == TypeName::String)

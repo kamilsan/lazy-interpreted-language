@@ -125,11 +125,12 @@ void SemanticAnalyser::visit(const FunctionDeclarationNode& node)
   symbols_.leaveScope();
   const auto returns = hasReturn_.top();
   hasReturn_.pop();
+
   if(node.getReturnType() != TypeName::Void && !returns)
     throw std::runtime_error("ERROR: Function " + name + " does not return any value!");
   else if(node.getReturnType() == TypeName::Void && returns)
     throw std::runtime_error("ERROR: Void function " + name + " does return!");
-  else if(node.getReturnType() != returns)
+  else if(node.getReturnType() != TypeName::Void && node.getReturnType() != returns)
     throw std::runtime_error("ERROR: Function " + name + " should return " + 
       TypeNameStrings.at(node.getReturnType()) + ", but returns " + 
         TypeNameStrings.at(returns.value()) + "!");
@@ -187,11 +188,12 @@ void SemanticAnalyser::visit(const LambdaNode& node)
   symbols_.leaveScope();
   const auto returns = hasReturn_.top();
   hasReturn_.pop();
+  
   if(node.getReturnType() != TypeName::Void && !returns)
     throw std::runtime_error("ERROR: Lambda does not return any value!");
   else if(node.getReturnType() == TypeName::Void && returns)
     throw std::runtime_error("ERROR: Void lambda returns!");
-  else if(node.getReturnType() != returns)
+  else if(node.getReturnType() != TypeName::Void && node.getReturnType() != returns)
     throw std::runtime_error("ERROR: Lambda should return " + 
       TypeNameStrings.at(node.getReturnType()) + ", but returns " + 
         TypeNameStrings.at(returns.value()) + "!");
