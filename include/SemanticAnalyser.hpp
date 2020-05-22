@@ -31,8 +31,18 @@ public:
   void visit(const VariableNode&) override;
 
 private:
+  struct ReturnInfo
+  {
+    ReturnInfo(): hasReturn(false), type() {}
+    ReturnInfo(bool returns): hasReturn(returns), type() {}
+    ReturnInfo(TypeName type): hasReturn(true), type(type) {}
+
+    bool hasReturn;
+    std::optional<TypeName> type;
+  };
+
   void addBuildInSymbols();
 
   SymbolTable symbols_;
-  std::stack<std::optional<TypeName>> hasReturn_;
+  std::stack<ReturnInfo> hasReturn_;
 };

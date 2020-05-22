@@ -18,9 +18,9 @@ void VariableAnalyserVisitor::visit(FunctionSymbol&)
 FunctionAnalyserVisitor::FunctionAnalyserVisitor():
   symbolValid_(false), returnType_(), arguments_() {}
 
-void FunctionAnalyserVisitor::visit(VariableSymbol&)
+void FunctionAnalyserVisitor::visit(VariableSymbol& node)
 {
-  symbolValid_ = false;
+  symbolValid_ = node.getType() == TypeName::Function;
 }
 
 void FunctionAnalyserVisitor::visit(FunctionSymbol& symbol)

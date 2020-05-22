@@ -37,7 +37,10 @@ void SemanticAnalyser::visit(const AssignmentNode& node)
 
   TypeChecker typeChecker{symbols_};
   node.getValue().accept(typeChecker);
-  if(typeChecker.getType() != analyser.getType())
+
+  // Type checker is not be able to deduce expression's type when variable was called
+  // and in that case getType has no value.
+  if(typeChecker.getType().has_value() && typeChecker.getType() != analyser.getType())
     throw std::runtime_error("ERROR: Cannot assign value of type " + 
       TypeNameStrings.at(typeChecker.getType().value()) + " to variable " + name + "!");
 }
@@ -66,28 +69,35 @@ void SemanticAnalyser::visit(const FunctionCallNode& node)
   if(!analyser.isSymbolValid())
     throw std::runtime_error("ERROR: Symbol " + name + " does not name a function!");
 
-  const auto expectedArgs = analyser.getArguments();
-  const auto& providedArgs = node.getArguments();
-  const auto nExpectedArgs = expectedArgs.size();
-  const auto nProvidedArgs = providedArgs.size();
-
-  if(nExpectedArgs != nProvidedArgs)
-    throw std::runtime_error("ERROR: Function " + name + " expected " +
-      std::to_string(nExpectedArgs) + ", but got " + std::to_string(nProvidedArgs) + " arguments!");
-
-  auto expectedArgsIt = expectedArgs.begin();
-  for(const auto& arg : node.getArguments())
+  /*
+   * If user calls variable of type function, then analyser knows nothing about it's return type and arguments.
+   * This is because variables' values are not being tracked.
+   */
+  if(analyser.getReturnType().has_value())
   {
-    arg->accept(*this);
+    const auto expectedArgs = analyser.getArguments();
+    const auto& providedArgs = node.getArguments();
+    const auto nExpectedArgs = expectedArgs.size();
+    const auto nProvidedArgs = providedArgs.size();
 
-    TypeChecker typeChecker{symbols_};
-    arg->accept(typeChecker);
-    if(typeChecker.getType() != *expectedArgsIt)
-      throw std::runtime_error("ERROR: Function " + name + " expected argument of type " + 
-        TypeNameStrings.at(*expectedArgsIt) + ", but got " + 
-          TypeNameStrings.at(typeChecker.getType().value()) + "!");
-    
-    expectedArgsIt++;
+    if(nExpectedArgs != nProvidedArgs)
+      throw std::runtime_error("ERROR: Function " + name + " expected " +
+        std::to_string(nExpectedArgs) + ", but got " + std::to_string(nProvidedArgs) + " arguments!");
+
+    auto expectedArgsIt = expectedArgs.begin();
+    for(const auto& arg : node.getArguments())
+    {
+      arg->accept(*this);
+
+      TypeChecker typeChecker{symbols_};
+      arg->accept(typeChecker);
+      if(typeChecker.getType().has_value() && typeChecker.getType() != *expectedArgsIt)
+        throw std::runtime_error("ERROR: Function " + name + " expected argument of type " + 
+          TypeNameStrings.at(*expectedArgsIt) + ", but got " + 
+            TypeNameStrings.at(typeChecker.getType().value()) + "!");
+      
+      expectedArgsIt++;
+    }
   }
 }
 
@@ -123,17 +133,18 @@ void SemanticAnalyser::visit(const FunctionDeclarationNode& node)
   node.getBody().accept(*this);
   
   symbols_.leaveScope();
-  const auto returns = hasReturn_.top();
+  const auto returnInfo = hasReturn_.top();
   hasReturn_.pop();
 
-  if(node.getReturnType() != TypeName::Void && !returns)
+  if(node.getReturnType() != TypeName::Void && !returnInfo.hasReturn)
     throw std::runtime_error("ERROR: Function " + name + " does not return any value!");
-  else if(node.getReturnType() == TypeName::Void && returns)
+  else if(node.getReturnType() == TypeName::Void && returnInfo.hasReturn)
     throw std::runtime_error("ERROR: Void function " + name + " does return!");
-  else if(node.getReturnType() != TypeName::Void && node.getReturnType() != returns)
+  else if(node.getReturnType() != TypeName::Void && 
+    returnInfo.type.has_value() && node.getReturnType() != returnInfo.type.value())
     throw std::runtime_error("ERROR: Function " + name + " should return " + 
       TypeNameStrings.at(node.getReturnType()) + ", but returns " + 
-        TypeNameStrings.at(returns.value()) + "!");
+        TypeNameStrings.at(returnInfo.type.value()) + "!");
 }
 
 void SemanticAnalyser::visit(const FunctionResultCallNode& node) 
@@ -164,7 +175,7 @@ void SemanticAnalyser::visit(const LambdaCallNode& node)
 
     TypeChecker typeChecker{symbols_};
     arg->accept(typeChecker);
-    if(typeChecker.getType() != expectedArgumentIt->second)
+    if(typeChecker.getType().has_value() && typeChecker.getType() != expectedArgumentIt->second)
       throw std::runtime_error("ERROR: Lambda expected argument of type " + 
         TypeNameStrings.at(expectedArgumentIt->second) + ", but got " + 
           TypeNameStrings.at(typeChecker.getType().value()) + "!");
@@ -186,17 +197,18 @@ void SemanticAnalyser::visit(const LambdaNode& node)
   node.getBody().accept(*this);
 
   symbols_.leaveScope();
-  const auto returns = hasReturn_.top();
+  const auto returnInfo = hasReturn_.top();
   hasReturn_.pop();
-  
-  if(node.getReturnType() != TypeName::Void && !returns)
+
+  if(node.getReturnType() != TypeName::Void && !returnInfo.hasReturn)
     throw std::runtime_error("ERROR: Lambda does not return any value!");
-  else if(node.getReturnType() == TypeName::Void && returns)
-    throw std::runtime_error("ERROR: Void lambda returns!");
-  else if(node.getReturnType() != TypeName::Void && node.getReturnType() != returns)
+  else if(node.getReturnType() == TypeName::Void && returnInfo.hasReturn)
+    throw std::runtime_error("ERROR: Void lambda does return!");
+  else if(node.getReturnType() != TypeName::Void && 
+    returnInfo.type.has_value() && node.getReturnType() != returnInfo.type.value())
     throw std::runtime_error("ERROR: Lambda should return " + 
       TypeNameStrings.at(node.getReturnType()) + ", but returns " + 
-        TypeNameStrings.at(returns.value()) + "!");
+        TypeNameStrings.at(returnInfo.type.value()) + "!");
 }
 
 void SemanticAnalyser::visit(const NumericLiteralNode&) 
@@ -227,7 +239,11 @@ void SemanticAnalyser::visit(const ReturnNode& node)
   node.getValue().accept(*this);
   TypeChecker typeChecker{symbols_};
   node.getValue().accept(typeChecker);
-  hasReturn_.top() = typeChecker.getType();
+
+  if(typeChecker.getType().has_value())
+    hasReturn_.top() = ReturnInfo{typeChecker.getType().value()};
+  else
+    hasReturn_.top() = ReturnInfo{true};
 }
 
 void SemanticAnalyser::visit(const StringLiteralNode&) 
@@ -250,7 +266,10 @@ void SemanticAnalyser::visit(const VariableDeclarationNode& node)
 
   TypeChecker typeChecker{symbols_};
   node.getValue().accept(typeChecker);
-  if(typeChecker.getType() != node.getType())
+
+  // Type checker is not be able to deduce expression's type when variable was called
+  // and in that case getType has no value.
+  if(typeChecker.getType().has_value() && typeChecker.getType() != node.getType())
     throw std::runtime_error("ERROR: Cannot assign value of type " + 
       TypeNameStrings.at(typeChecker.getType().value()) + " to variable " + name + "!");
 

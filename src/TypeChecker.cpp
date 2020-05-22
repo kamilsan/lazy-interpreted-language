@@ -13,19 +13,21 @@ void TypeChecker::visit(const BinaryOpNode& node)
 {
   TypeChecker checker{symbols_};
   node.getLeftOperand().accept(checker);  
-  auto leftType = checker.getType().value();
+  auto leftType = checker.getType();
 
   node.getRightOperand().accept(checker);
-  auto rightType = checker.getType().value();
+  auto rightType = checker.getType();
 
-  if(leftType == TypeName::String)
+  if(!leftType.has_value() || !rightType.has_value())
+    type_ = {};
+  else if(leftType == TypeName::String)
   {
     if(node.getOperation() != BinaryOperator::Addition)
       throw std::runtime_error("ERROR: Invalid operation on value of type " + 
-        TypeNameStrings.at(leftType) + "!");
+        TypeNameStrings.at(leftType.value()) + "!");
     else if(rightType != TypeName::F32 && rightType != TypeName::String)
       throw std::runtime_error("ERROR: Cannot concatenate string with " +
-        TypeNameStrings.at(rightType) + "!");
+        TypeNameStrings.at(rightType.value()) + "!");
 
     type_ = TypeName::String;
   }
@@ -33,7 +35,7 @@ void TypeChecker::visit(const BinaryOpNode& node)
     type_ = TypeName::F32;
   else
     throw std::runtime_error("ERROR: Invalid operation on value of type " + 
-        TypeNameStrings.at(leftType) + "!");
+        TypeNameStrings.at(leftType.value()) + "!");
 }
 
 void TypeChecker::visit(const BlockNode&)
@@ -91,10 +93,10 @@ void TypeChecker::visit(const UnaryNode& node)
 {
   TypeChecker checker{symbols_};
   node.getTerm().accept(checker);
-  auto termType = checker.getType().value();
-  if(termType != TypeName::F32)
+  auto termType = checker.getType();
+  if(termType.has_value() && termType != TypeName::F32)
     throw std::runtime_error("ERROR: Invalid operation on value of type " + 
-      TypeNameStrings.at(termType) + "!");
+      TypeNameStrings.at(termType.value()) + "!");
   
   type_ = termType;
 }
