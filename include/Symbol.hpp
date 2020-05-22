@@ -106,7 +106,7 @@ public:
   void enterScope();
   void leaveScope();
   void addSymbol(const std::string& name, std::unique_ptr<Symbol> symbol);
-  std::optional<std::reference_wrapper<Symbol>> lookup(const std::string& name) const;
+  std::optional<std::reference_wrapper<Symbol>> lookup(const std::string& name, int maxDepth = 0) const;
 
 private:
   std::deque<std::unordered_map<std::string, std::unique_ptr<Symbol>>> scopes_;

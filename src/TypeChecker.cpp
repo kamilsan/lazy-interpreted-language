@@ -23,6 +23,9 @@ void TypeChecker::visit(const BinaryOpNode& node)
     if(node.getOperation() != BinaryOperator::Addition)
       throw std::runtime_error("ERROR: Invalid operation on value of type " + 
         TypeNameStrings.at(leftType) + "!");
+    else if(rightType != TypeName::F32 && rightType != TypeName::String)
+      throw std::runtime_error("ERROR: Cannot concatenate string with " +
+        TypeNameStrings.at(rightType) + "!");
 
     type_ = TypeName::String;
   }

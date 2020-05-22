@@ -53,13 +53,17 @@ void SymbolTable::addSymbol(const std::string& name, std::unique_ptr<Symbol> sym
   scopes_.back().insert(std::pair<std::string, std::unique_ptr<Symbol>>{name, std::move(symbol)});
 }
 
-std::optional<std::reference_wrapper<Symbol>> SymbolTable::lookup(const std::string& name) const
+std::optional<std::reference_wrapper<Symbol>> SymbolTable::lookup(const std::string& name, int maxDepth) const
 {
-  for(auto scopesIt = scopes_.crbegin(); scopesIt < scopes_.crend(); ++scopesIt)
+  int depth = 1;
+  for(auto scopesIt = scopes_.crbegin(); scopesIt < scopes_.crend(); ++scopesIt, ++depth)
   {
     auto it = scopesIt->find(name);
     if(it != scopesIt->end())
       return *it->second;
+
+    if(maxDepth != 0 && depth == maxDepth)
+      break;
   }
 
   return {};  

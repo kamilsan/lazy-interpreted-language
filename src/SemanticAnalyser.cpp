@@ -99,7 +99,7 @@ void SemanticAnalyser::visit(const FunctionCallStatementNode& node)
 void SemanticAnalyser::visit(const FunctionDeclarationNode& node) 
 {
   const auto name = node.getName();
-  const auto symbol = symbols_.lookup(name);
+  const auto symbol = symbols_.lookup(name, 1);
   if(symbol)
     throw std::runtime_error("ERROR: Redefinition of function named " + name + "!");
  
@@ -112,7 +112,7 @@ void SemanticAnalyser::visit(const FunctionDeclarationNode& node)
 
   symbols_.addSymbol(name, std::move(functionSymbol));
 
-  hasReturn_.push(false);
+  hasReturn_.push({});
   symbols_.enterScope();
 
   for(const auto& arg: args)
@@ -123,12 +123,16 @@ void SemanticAnalyser::visit(const FunctionDeclarationNode& node)
   node.getBody().accept(*this);
   
   symbols_.leaveScope();
-  const bool returns = hasReturn_.top();
+  const auto returns = hasReturn_.top();
   hasReturn_.pop();
   if(node.getReturnType() != TypeName::Void && !returns)
     throw std::runtime_error("ERROR: Function " + name + " does not return any value!");
   else if(node.getReturnType() == TypeName::Void && returns)
     throw std::runtime_error("ERROR: Void function " + name + " does return!");
+  else if(node.getReturnType() != returns)
+    throw std::runtime_error("ERROR: Function " + name + " should return " + 
+      TypeNameStrings.at(node.getReturnType()) + ", but returns " + 
+        TypeNameStrings.at(returns.value()) + "!");
 }
 
 void SemanticAnalyser::visit(const FunctionResultCallNode& node) 
@@ -170,7 +174,7 @@ void SemanticAnalyser::visit(const LambdaCallNode& node)
 
 void SemanticAnalyser::visit(const LambdaNode& node) 
 {
-  hasReturn_.push(false);
+  hasReturn_.push({});
   symbols_.enterScope();
 
   for(const auto& arg : node.getArguments())
@@ -187,6 +191,10 @@ void SemanticAnalyser::visit(const LambdaNode& node)
     throw std::runtime_error("ERROR: Lambda does not return any value!");
   else if(node.getReturnType() == TypeName::Void && returns)
     throw std::runtime_error("ERROR: Void lambda returns!");
+  else if(node.getReturnType() != returns)
+    throw std::runtime_error("ERROR: Lambda should return " + 
+      TypeNameStrings.at(node.getReturnType()) + ", but returns " + 
+        TypeNameStrings.at(returns.value()) + "!");
 }
 
 void SemanticAnalyser::visit(const NumericLiteralNode&) 
@@ -215,7 +223,9 @@ void SemanticAnalyser::visit(const ProgramNode& node)
 void SemanticAnalyser::visit(const ReturnNode& node) 
 {
   node.getValue().accept(*this);
-  hasReturn_.top() = true;
+  TypeChecker typeChecker{symbols_};
+  node.getValue().accept(typeChecker);
+  hasReturn_.top() = typeChecker.getType();
 }
 
 void SemanticAnalyser::visit(const StringLiteralNode&) 
@@ -230,7 +240,7 @@ void SemanticAnalyser::visit(const UnaryNode& node)
 void SemanticAnalyser::visit(const VariableDeclarationNode& node) 
 {
   const auto name = node.getName();
-  const auto symbol = symbols_.lookup(name);
+  const auto symbol = symbols_.lookup(name, 1);
   if(symbol)
     throw std::runtime_error("ERROR: Redefinition of variable " + name + "!");
   
