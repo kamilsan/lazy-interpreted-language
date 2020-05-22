@@ -41,6 +41,7 @@ std::unique_ptr<ExpressionNode>
 Parser::parseExpression(std::function<std::unique_ptr<ExpressionNode>()> parseOperand, 
   std::function<bool(const Token&)> operatorPredicate)
 {
+  const auto mark = tokenizer_.getMark();
   auto node = parseOperand();
   auto token = tokenizer_.peek();
   while(operatorPredicate(token))
@@ -52,6 +53,7 @@ Parser::parseExpression(std::function<std::unique_ptr<ExpressionNode>()> parseOp
     node = std::make_unique<BinaryOpNode>(std::move(left), op, std::move(right));
     token = tokenizer_.peek();
   }
+  node->setMark(mark);
   return node;
 }
 
@@ -60,6 +62,7 @@ std::unique_ptr<Node> Parser::parseProgram()
 {
   auto programNode = std::make_unique<ProgramNode>();
   auto token = tokenizer_.peek();
+  const auto mark = tokenizer_.getMark();
   while(token.type == TokenType::KeywordFn || token.type == TokenType::KeywordLet)
   {
     if(token.type == TokenType::KeywordFn)
@@ -75,11 +78,13 @@ std::unique_ptr<Node> Parser::parseProgram()
     token = tokenizer_.peek();
   }
   expectToken(TokenType::EOT, "Unexpected token!");
+  programNode->setMark(mark);
   return programNode;
 }
 
 std::unique_ptr<ExpressionNode> Parser::parseStringExpression()
 {
+  const auto mark = tokenizer_.getMark();
   const auto str = std::get<std::string>(getToken(TokenType::String, "Expected string!").value);
   std::unique_ptr<ExpressionNode> node = std::make_unique<StringLiteralNode>(str);
 
@@ -102,7 +107,7 @@ std::unique_ptr<ExpressionNode> Parser::parseStringExpression()
       token = tokenizer_.peek();
     }
   }
-
+  node->setMark(mark);
   return node;
 }
 
@@ -118,13 +123,16 @@ std::unique_ptr<ExpressionNode> Parser::parseLogicalExpression()
 
 std::unique_ptr<ExpressionNode> Parser::parseUnaryLogical()
 {
+  const auto mark = tokenizer_.getMark();
   const auto token = tokenizer_.peek();
   if(token.type == TokenType::LogicalNot)
   {
     tokenizer_.nextToken();
     const auto op = unaryOperatorFromToken(token);
     auto comparison = parseComparisonExpression();
-    return std::make_unique<UnaryNode>(op, std::move(comparison));
+    auto node = std::make_unique<UnaryNode>(op, std::move(comparison));
+    node->setMark(mark);
+    return node;
   }
   else
     return parseComparisonExpression();
@@ -163,13 +171,16 @@ std::unique_ptr<ExpressionNode> Parser::parseFactor()
 
 std::unique_ptr<ExpressionNode> Parser::parseUnary()
 {
+  const auto mark = tokenizer_.getMark();
   const auto token = tokenizer_.peek();
   if(token.type == TokenType::Minus || token.type == TokenType::BinaryNot)
   {
     tokenizer_.nextToken();
     const auto op = unaryOperatorFromToken(token);
     auto term = parseTerm();
-    return std::make_unique<UnaryNode>(op, std::move(term));
+    auto node = std::make_unique<UnaryNode>(op, std::move(term));
+    node->setMark(mark);
+    return node;
   }
   else
     return parseTerm();
@@ -177,11 +188,14 @@ std::unique_ptr<ExpressionNode> Parser::parseUnary()
 
 std::unique_ptr<ExpressionNode> Parser::parseTerm()
 {
+  const auto mark = tokenizer_.getMark();
   auto token = tokenizer_.peek();
   if(token.type == TokenType::Number)
   {
     tokenizer_.nextToken();
-    return std::make_unique<NumericLiteralNode>(std::get<double>(token.value));
+    auto node = std::make_unique<NumericLiteralNode>(std::get<double>(token.value));
+    node->setMark(mark);
+    return node;
   }
   else if(token.type == TokenType::Identifier || Token::isSpecialFunction(token))
   {
@@ -190,7 +204,11 @@ std::unique_ptr<ExpressionNode> Parser::parseTerm()
     if(token.type == TokenType::LParen)
       return parseFunctionCall(identifierToken);
     else
-      return std::make_unique<VariableNode>(std::get<std::string>(identifierToken.value));
+    {
+      auto node = std::make_unique<VariableNode>(std::get<std::string>(identifierToken.value));
+      node->setMark(mark);
+      return node;
+    }
   }
   else if(token.type == TokenType::LParen)
   {
@@ -215,6 +233,7 @@ std::unique_ptr<ExpressionNode> Parser::parseTerm()
 
 std::unique_ptr<ExpressionNode> Parser::parseFunctionCall(std::optional<Token> identifierToken)
 {
+  const auto mark = tokenizer_.getMark();
   std::string name;
   if(identifierToken.has_value())
     name = std::get<std::string>(identifierToken.value().value);
@@ -238,25 +257,33 @@ std::unique_ptr<ExpressionNode> Parser::parseFunctionCall(std::optional<Token> i
     token = tokenizer_.peek();
   }
 
+  node->setMark(mark);
   return node;
 }
 
 std::unique_ptr<FunctionCallStatementNode> Parser::parseFunctionCallStatement(std::optional<Token> identifierToken)
 {
+  const auto mark = tokenizer_.getMark();
   auto functionCall = parseFunctionCall(identifierToken);
   expectToken(TokenType::Semicolon, "Expected semicolon!");
-  return std::make_unique<FunctionCallStatementNode>(std::move(functionCall));
+  auto node = std::make_unique<FunctionCallStatementNode>(std::move(functionCall));
+  node->setMark(mark);
+  return node;
 }
 
 std::unique_ptr<FunctionCallStatementNode> Parser::parseLambdaCallStatement()
 {
+  const auto mark = tokenizer_.getMark();
   auto lambdaCall = parseLambdaCall();
   expectToken(TokenType::Semicolon, "Expected semicolon!");
-  return std::make_unique<FunctionCallStatementNode>(std::move(lambdaCall));
+  auto node = std::make_unique<FunctionCallStatementNode>(std::move(lambdaCall));
+  node->setMark(mark);
+  return node;
 }
 
 std::unique_ptr<VariableDeclarationNode> Parser::parseVariableDeclaration()
 {
+  const auto mark = tokenizer_.getMark();
   expectToken(TokenType::KeywordLet, "Expected variable declaration!");
   const auto name = std::get<std::string>(getToken(TokenType::Identifier, "Expected variable name!").value);
   expectToken(TokenType::Colon, "Expected colon!");
@@ -271,13 +298,16 @@ std::unique_ptr<VariableDeclarationNode> Parser::parseVariableDeclaration()
     value = parseLogicalExpression();
 
   expectToken(TokenType::Semicolon, "Expected semicolon!");
-  return std::make_unique<VariableDeclarationNode>(name, type, std::move(value));
+  auto node = std::make_unique<VariableDeclarationNode>(name, type, std::move(value));
+  node->setMark(mark);
+  return node;
 }
 
 std::unique_ptr<AssignmentNode> Parser::parseAssignment(std::optional<Token> identifierToken)
 {
   std::string name;
   std::unique_ptr<ExpressionNode> value = nullptr;
+  const auto mark = tokenizer_.getMark();
 
   if(identifierToken.has_value())
     name = std::get<std::string>(identifierToken.value().value);
@@ -299,11 +329,14 @@ std::unique_ptr<AssignmentNode> Parser::parseAssignment(std::optional<Token> ide
     reportError("Expected assignment operator!");
 
   expectToken(TokenType::Semicolon, "Expected semicolon!");
-  return std::make_unique<AssignmentNode>(name, op, std::move(value));
+  auto node = std::make_unique<AssignmentNode>(name, op, std::move(value));
+  node->setMark(mark);
+  return node;
 }
 
 std::unique_ptr<StatementNode> Parser::parseReturnStatement()
 {
+  const auto mark = tokenizer_.getMark();
   expectToken(TokenType::KeywordRet, "Expected return statement!");
   std::unique_ptr<ExpressionNode> value = nullptr;
 
@@ -313,11 +346,14 @@ std::unique_ptr<StatementNode> Parser::parseReturnStatement()
     value = parseArithmeticExpression();
 
   expectToken(TokenType::Semicolon, "Expected semicolon!");
-  return std::make_unique<ReturnNode>(std::move(value));
+  auto node = std::make_unique<ReturnNode>(std::move(value));
+  node->setMark(mark);
+  return node;
 }
 
 std::unique_ptr<BlockNode> Parser::parseBlock()
 {
+  const auto mark = tokenizer_.getMark();
   expectToken(TokenType::LBrace, "Expected block statement!");
   auto blockNode = std::make_unique<BlockNode>();
   auto token = tokenizer_.peek();
@@ -365,11 +401,13 @@ std::unique_ptr<BlockNode> Parser::parseBlock()
     token = tokenizer_.peek();
   }
   expectToken(TokenType::RBrace, "Expected block end!");
+  blockNode->setMark(mark);
   return blockNode;
 }
 
 std::unique_ptr<FunctionDeclarationNode> Parser::parseFunctionDeclaration()
 {
+  const auto mark = tokenizer_.getMark();
   expectToken(TokenType::KeywordFn, "Expected function declaration!");
   const auto name = std::get<std::string>(getToken(TokenType::Identifier, "Expected function name!").value);
   const auto args = parseArgumentList();
@@ -378,11 +416,14 @@ std::unique_ptr<FunctionDeclarationNode> Parser::parseFunctionDeclaration()
   const auto type = parseType();
 
   auto body = parseBlock();
-  return std::make_unique<FunctionDeclarationNode>(name, type, args, std::move(body));
+  auto node = std::make_unique<FunctionDeclarationNode>(name, type, args, std::move(body));
+  node->setMark(mark);
+  return node;
 }
 
 std::unique_ptr<LambdaNode> Parser::parseLambda()
 {
+  const auto mark = tokenizer_.getMark();
   expectToken(TokenType::Backslash, "Expected lambda declaration!");
   const auto args = parseArgumentList();
   
@@ -391,11 +432,14 @@ std::unique_ptr<LambdaNode> Parser::parseLambda()
 
   expectToken(TokenType::Assign, "Expected assignment!");
   auto body = parseBlock();
-  return std::make_unique<LambdaNode>(type, args, std::move(body));
+  auto node = std::make_unique<LambdaNode>(type, args, std::move(body));
+  node->setMark(mark);
+  return node;
 }
 
 std::unique_ptr<ExpressionNode> Parser::parseLambdaCall(bool lParenSkipped)
 {
+  const auto mark = tokenizer_.getMark();
   if(!lParenSkipped)
     expectToken(TokenType::LParen, "Expected open parenthesis!");
   
@@ -413,7 +457,7 @@ std::unique_ptr<ExpressionNode> Parser::parseLambdaCall(bool lParenSkipped)
     node = std::make_unique<FunctionResultCallNode>(std::move(func), std::move(arguments));
     token = tokenizer_.peek();
   }
-
+  node->setMark(mark);
   return node;
 }
 

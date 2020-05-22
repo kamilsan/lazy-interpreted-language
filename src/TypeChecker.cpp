@@ -1,5 +1,13 @@
 #include "TypeChecker.hpp"
 
+[[noreturn]]
+void TypeChecker::reportError(const std::string& message, const Node& node) const
+{
+  const auto mark = node.getMark();
+  std::stringstream ss;
+  ss << "ERROR (" << mark.to_string() << "): " << message;
+  throw std::runtime_error(ss.str());
+}
 
 const std::optional<TypeName>& TypeChecker::getType() const
 {
@@ -23,19 +31,19 @@ void TypeChecker::visit(const BinaryOpNode& node)
   else if(leftType == TypeName::String)
   {
     if(node.getOperation() != BinaryOperator::Addition)
-      throw std::runtime_error("ERROR: Invalid operation on value of type " + 
-        TypeNameStrings.at(leftType.value()) + "!");
+      reportError("Invalid operation on value of type " + 
+        TypeNameStrings.at(leftType.value()) + "!", node);
     else if(rightType != TypeName::F32 && rightType != TypeName::String)
-      throw std::runtime_error("ERROR: Cannot concatenate string with " +
-        TypeNameStrings.at(rightType.value()) + "!");
+      reportError("Cannot concatenate string with " +
+        TypeNameStrings.at(rightType.value()) + "!", node);
 
     type_ = TypeName::String;
   }
   else if(leftType == TypeName::F32 && rightType == TypeName::F32)
     type_ = TypeName::F32;
   else
-    throw std::runtime_error("ERROR: Invalid operation on value of type " + 
-        TypeNameStrings.at(leftType.value()) + "!");
+    reportError("Invalid operation on value of type " + 
+        TypeNameStrings.at(leftType.value()) + "!", node);
 }
 
 void TypeChecker::visit(const BlockNode&)
@@ -95,8 +103,8 @@ void TypeChecker::visit(const UnaryNode& node)
   node.getTerm().accept(checker);
   auto termType = checker.getType();
   if(termType.has_value() && termType != TypeName::F32)
-    throw std::runtime_error("ERROR: Invalid operation on value of type " + 
-      TypeNameStrings.at(termType.value()) + "!");
+    reportError("Invalid operation on value of type " + 
+      TypeNameStrings.at(termType.value()) + "!", node);
   
   type_ = termType;
 }
@@ -119,6 +127,6 @@ void TypeChecker::visit(const VariableNode& node)
     if(analyser.isSymbolValid())
       type_ = TypeName::Function;
     else
-      throw std::runtime_error("ERROR: Invalid symbol reference!");
+      reportError("Invalid symbol reference!", node);
   }
 }

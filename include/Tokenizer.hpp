@@ -14,6 +14,7 @@ public:
 
   bool end() const;
   const Token& peek() const;
+  const Mark& getMark() const { return stream_.getMark(); }
   Token nextToken();
 private:
   const static std::set<std::string> keywords_;

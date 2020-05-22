@@ -110,7 +110,13 @@ const std::unordered_map<TypeName, std::string> TypeNameStrings = {
 class Node
 {
 public:
+  Node(const Mark& mark = {}): mark_(mark) {}
+
   virtual void accept(Visitor&) const = 0;
+  const Mark& getMark() const { return mark_; }
+  void setMark(const Mark& mark) { mark_ = mark; }
+protected:
+  Mark mark_;
 };
 
 class ExpressionNode : public Node
@@ -200,8 +206,10 @@ private:
 class BinaryOpNode : public ExpressionNode
 {
 public:
-  BinaryOpNode(std::unique_ptr<ExpressionNode> leftOperand, const BinaryOperator& op, std::unique_ptr<ExpressionNode> rightOperand):
-    leftOperand_(std::move(leftOperand)), operator_(op), rightOperand_(std::move(rightOperand)) {}
+  BinaryOpNode(std::unique_ptr<ExpressionNode> leftOperand, 
+    const BinaryOperator& op, std::unique_ptr<ExpressionNode> rightOperand):
+      leftOperand_(std::move(leftOperand)), 
+      operator_(op), rightOperand_(std::move(rightOperand)) {}
 
   const ExpressionNode& getLeftOperand() const { return *leftOperand_; }
   const ExpressionNode& getRightOperand() const { return *rightOperand_; }
@@ -217,8 +225,9 @@ private:
 class FunctionResultCallNode : public ExpressionNode
 {
 public:
-  FunctionResultCallNode(std::unique_ptr<ExpressionNode> call, std::list<std::unique_ptr<ExpressionNode>> arguments):
-    call_(std::move(call)), arguments_(std::move(arguments)) {}
+  FunctionResultCallNode(std::unique_ptr<ExpressionNode> call, 
+    std::list<std::unique_ptr<ExpressionNode>> arguments):
+      call_(std::move(call)), arguments_(std::move(arguments)) {}
 
   const ExpressionNode& getCall() const { return *call_; }
   const std::list<std::unique_ptr<ExpressionNode>>& getArguments() const { return arguments_; }
@@ -232,8 +241,9 @@ private:
 class FunctionCallNode : public ExpressionNode
 {
 public:
-  FunctionCallNode(const std::string& name, std::list<std::unique_ptr<ExpressionNode>> arguments):
-    name_(name), arguments_(std::move(arguments)) {}
+  FunctionCallNode(const std::string& name, 
+    std::list<std::unique_ptr<ExpressionNode>> arguments):
+      name_(name), arguments_(std::move(arguments)) {}
 
   const std::string& getName() const { return name_; }
   const std::list<std::unique_ptr<ExpressionNode>>& getArguments() const { return arguments_; }
@@ -265,8 +275,9 @@ private:
 class LambdaCallNode : public ExpressionNode
 {
 public:
-  LambdaCallNode(std::unique_ptr<LambdaNode> lambda, std::list<std::unique_ptr<ExpressionNode>> arguments):
-    lambda_(std::move(lambda)), arguments_(std::move(arguments)) {}
+  LambdaCallNode(std::unique_ptr<LambdaNode> lambda, 
+    std::list<std::unique_ptr<ExpressionNode>> arguments):
+      lambda_(std::move(lambda)), arguments_(std::move(arguments)) {}
 
   const LambdaNode& getLambda() const { return *lambda_; }
   const std::list<std::unique_ptr<ExpressionNode>>& getArguments() const { return arguments_; }
@@ -280,8 +291,9 @@ private:
 class VariableDeclarationNode : public StatementNode
 {
 public:
-  VariableDeclarationNode(const std::string& name, const TypeName& type, std::unique_ptr<ExpressionNode> value):
-    name_(name), type_(type), value_(std::move(value)) {}
+  VariableDeclarationNode(const std::string& name, 
+    const TypeName& type, std::unique_ptr<ExpressionNode> value):
+      name_(name), type_(type), value_(std::move(value)) {}
 
   const std::string& getName() const { return name_; }
   const TypeName& getType() const { return type_; }
@@ -297,8 +309,9 @@ private:
 class AssignmentNode : public StatementNode
 {
 public:
-  AssignmentNode(const std::string& name, const AssignmentOperator& operation, std::unique_ptr<ExpressionNode> value):
-    name_(name), operator_(operation), value_(std::move(value)) {}
+  AssignmentNode(const std::string& name, 
+    const AssignmentOperator& operation, std::unique_ptr<ExpressionNode> value):
+      name_(name), operator_(operation), value_(std::move(value)) {}
 
   const std::string& getName() const { return name_; }
   const AssignmentOperator& getOperation() const { return operator_; }
@@ -314,8 +327,7 @@ private:
 class ReturnNode : public StatementNode
 {
 public:
-  ReturnNode(std::unique_ptr<ExpressionNode> value):
-    value_(std::move(value)) {}
+  ReturnNode(std::unique_ptr<ExpressionNode> value): value_(std::move(value)) {}
 
   const ExpressionNode& getValue() const { return *value_; }
 
