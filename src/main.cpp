@@ -4,6 +4,7 @@
 #include "Parser.hpp"
 #include "PrintVisitor.hpp"
 #include "SemanticAnalyser.hpp"
+#include "Executor.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -25,12 +26,16 @@ int main(int argc, char* argv[])
     Parser parser{sourceFile};
     PrintVisitor visitor{};
     SemanticAnalyser semantic{};
+    Executor executor{};
     
-    auto program = parser.parseProgram();
+    auto program = parser.parseLogicalExpression();
     program->accept(visitor);
     program->accept(semantic);
-
+    program->accept(executor);
+    
     sourceFile.close();
+
+    std::cout << executor.getValue().value() << "\n";
   }
   catch(std::runtime_error& er)
   {

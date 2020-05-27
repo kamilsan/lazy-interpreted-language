@@ -30,6 +30,7 @@ set(PROJECT_CODE
   src/Symbol.cpp include/Symbol.hpp
   src/TypeChecker.cpp include/TypeChecker.hpp
   src/SemanticAnalyser.cpp include/SemanticAnalyser.hpp
+  src/Executor.cpp include/Executor.hpp
   src/Stream.cpp include/Stream.hpp
   src/Tokenizer.cpp include/Tokenizer.hpp
   src/Parser.cpp include/Parser.hpp
