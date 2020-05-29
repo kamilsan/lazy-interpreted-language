@@ -297,13 +297,13 @@ public:
 
   const std::string& getName() const { return name_; }
   const TypeName& getType() const { return type_; }
-  const ExpressionNode& getValue() const { return *value_; }
+  const std::shared_ptr<ExpressionNode>& getValue() const { return value_; }
 
   void accept(Visitor& visitor) const override { visitor.visit(*this); }
 private:
   std::string name_;
   TypeName type_;
-  std::unique_ptr<ExpressionNode> value_;
+  std::shared_ptr<ExpressionNode> value_;
 };
 
 class AssignmentNode : public StatementNode
@@ -359,14 +359,14 @@ public:
   const std::string& getName() const { return name_; }
   const TypeName& getReturnType() const { return returnType_; }
   const std::list<std::pair<std::string, TypeName>>& getArguments() const { return arguments_; }
-  const BlockNode& getBody() const { return *body_; }
+  const std::shared_ptr<BlockNode>& getBody() const { return body_; }
 
   void accept(Visitor& visitor) const override { visitor.visit(*this); }
 private:
   std::string name_;
   TypeName returnType_;
   std::list<std::pair<std::string, TypeName>> arguments_;
-  std::unique_ptr<BlockNode> body_;
+  std::shared_ptr<BlockNode> body_;
 };
 
 class FunctionCallStatementNode : public StatementNode

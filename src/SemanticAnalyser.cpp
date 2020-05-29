@@ -37,7 +37,7 @@ void SemanticAnalyser::visit(const AssignmentNode& node)
   if(!symbol)
     reportError("Assignment to undeclared variable " + name, node);
 
-  VariableAnalyserVisitor analyser{};
+  VariableAnalyser analyser{};
   symbol.value().get().accept(analyser);
   if(!analyser.isSymbolValid())
     reportError("Assignment to a non-variable symbol " + name, node);
@@ -76,7 +76,7 @@ void SemanticAnalyser::visit(const FunctionCallNode& node)
   if(!symbol)
     reportError("Calling undefined function named " + name + "!", node);
 
-  FunctionAnalyserVisitor analyser{};
+  FunctionAnalyser analyser{};
   symbol.value().get().accept(analyser);
   if(!analyser.isSymbolValid())
     reportError("Symbol " + name + " does not name a function!", node);
@@ -142,7 +142,7 @@ void SemanticAnalyser::visit(const FunctionDeclarationNode& node)
     symbols_.addSymbol(arg.first, std::make_unique<VariableSymbol>(arg.first, arg.second));
   }
 
-  node.getBody().accept(*this);
+  node.getBody()->accept(*this);
   
   symbols_.leaveScope();
   const auto returnInfo = hasReturn_.top();
@@ -246,7 +246,7 @@ void SemanticAnalyser::visit(const ProgramNode& node)
   if(!symbol)
     reportError("Main function was not found!", node);
   
-  FunctionAnalyserVisitor analyser{};
+  FunctionAnalyser analyser{};
   symbol.value().get().accept(analyser);
   if(!analyser.isSymbolValid())
     reportError("Symbol main does not name a function!", node);
@@ -282,10 +282,10 @@ void SemanticAnalyser::visit(const VariableDeclarationNode& node)
   if(symbol)
     reportError("Redefinition of variable " + name + "!", node);
   
-  node.getValue().accept(*this);
+  node.getValue()->accept(*this);
 
   TypeChecker typeChecker{symbols_};
-  node.getValue().accept(typeChecker);
+  node.getValue()->accept(typeChecker);
 
   // Type checker is not be able to deduce expression's type when variable was called
   // and in that case getType has no value.

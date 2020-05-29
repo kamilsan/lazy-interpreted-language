@@ -20,10 +20,10 @@ public:
   virtual void visit(FunctionSymbol&) = 0;
 };
 
-class VariableAnalyserVisitor: public SymbolVisitor
+class VariableAnalyser: public SymbolVisitor
 {
 public:
-  VariableAnalyserVisitor();
+  VariableAnalyser();
 
   bool isSymbolValid() const { return symbolValid_; }
   std::optional<TypeName> getType() const { return type_; }
@@ -35,10 +35,10 @@ private:
   std::optional<TypeName> type_;
 };
 
-class FunctionAnalyserVisitor: public SymbolVisitor
+class FunctionAnalyser: public SymbolVisitor
 {
 public:
-  FunctionAnalyserVisitor();
+  FunctionAnalyser();
 
   bool isSymbolValid() const { return symbolValid_; }
   std::optional<TypeName> getReturnType() const { return returnType_; }

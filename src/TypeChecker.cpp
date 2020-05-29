@@ -53,7 +53,7 @@ void TypeChecker::visit(const FunctionCallNode& node)
 {
   auto name = node.getName();
   auto& symbol = symbols_.lookup(name).value().get();
-  FunctionAnalyserVisitor analyser{};
+  FunctionAnalyser analyser{};
   symbol.accept(analyser);
   type_ = analyser.getReturnType();
 }
@@ -116,13 +116,13 @@ void TypeChecker::visit(const VariableNode& node)
 {
   auto name = node.getName();
   auto& symbol = symbols_.lookup(name).value().get();
-  VariableAnalyserVisitor analyser{};
+  VariableAnalyser analyser{};
   symbol.accept(analyser);
   if(analyser.isSymbolValid())
     type_ = analyser.getType().value();
   else
   {
-    FunctionAnalyserVisitor analyser{};
+    FunctionAnalyser analyser{};
     symbol.accept(analyser);
     if(analyser.isSymbolValid())
       type_ = TypeName::Function;

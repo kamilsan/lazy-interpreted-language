@@ -1,15 +1,17 @@
 #pragma once
 
 #include "Visitor.hpp"
+#include "Context.hpp"
 
-#include <optional>
+#include <variant>
+#include <string>
 
 class Executor : public Visitor
 {
 public:
   Executor(): value_() {}
 
-  const std::optional<double>& getValue() const { return value_; }
+  const std::variant<double, std::string>& getValue() const { return value_; }
 
   void visit(const AssignmentNode&) override;
   void visit(const BinaryOpNode&) override;
@@ -29,5 +31,6 @@ public:
   void visit(const VariableNode&) override;
 
 private:
-  std::optional<double> value_;
+  std::variant<double, std::string> value_;
+  Context context_;
 };

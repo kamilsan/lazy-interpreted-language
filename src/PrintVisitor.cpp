@@ -59,7 +59,7 @@ void PrintVisitor::visit(const VariableDeclarationNode& node)
   stream_ << indent() << "Name: " << node.getName() << "\n";
   auto visitor = PrintVisitor{stream_, indentation_ + 1};
   stream_ << indent() << "Value:\n";
-  node.getValue().accept(visitor);
+  node.getValue()->accept(visitor);
 }
 
 void PrintVisitor::visit(const AssignmentNode& node)
@@ -104,7 +104,7 @@ void PrintVisitor::visit(const FunctionDeclarationNode& node)
   }
   auto visitor = PrintVisitor{stream_, indentation_ + 1};
   stream_ << indent() << "Body:\n";
-  node.getBody().accept(visitor);
+  node.getBody()->accept(visitor);
 }
 
 void PrintVisitor::visit(const FunctionCallNode& node)

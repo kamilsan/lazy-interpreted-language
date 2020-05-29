@@ -24,18 +24,14 @@ int main(int argc, char* argv[])
     }
 
     Parser parser{sourceFile};
-    PrintVisitor visitor{};
     SemanticAnalyser semantic{};
     Executor executor{};
     
-    auto program = parser.parseLogicalExpression();
-    program->accept(visitor);
+    auto program = parser.parseBlock();
     program->accept(semantic);
     program->accept(executor);
     
     sourceFile.close();
-
-    std::cout << executor.getValue().value() << "\n";
   }
   catch(std::runtime_error& er)
   {

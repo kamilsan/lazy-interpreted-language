@@ -1,29 +1,29 @@
 #include "Symbol.hpp"
 
 
-VariableAnalyserVisitor::VariableAnalyserVisitor():
+VariableAnalyser::VariableAnalyser():
   symbolValid_(false), type_() {}
 
-void VariableAnalyserVisitor::visit(VariableSymbol& symbol)
+void VariableAnalyser::visit(VariableSymbol& symbol)
 {
   type_ = symbol.getType();
   symbolValid_ = true;
 }
 
-void VariableAnalyserVisitor::visit(FunctionSymbol&)
+void VariableAnalyser::visit(FunctionSymbol&)
 {
   symbolValid_ = false;
 }
 
-FunctionAnalyserVisitor::FunctionAnalyserVisitor():
+FunctionAnalyser::FunctionAnalyser():
   symbolValid_(false), returnType_(), arguments_() {}
 
-void FunctionAnalyserVisitor::visit(VariableSymbol& node)
+void FunctionAnalyser::visit(VariableSymbol& node)
 {
   symbolValid_ = node.getType() == TypeName::Function;
 }
 
-void FunctionAnalyserVisitor::visit(FunctionSymbol& symbol)
+void FunctionAnalyser::visit(FunctionSymbol& symbol)
 {
   symbolValid_ = true;
   arguments_ = symbol.getArguments();
