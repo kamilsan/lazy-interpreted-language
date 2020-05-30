@@ -45,10 +45,10 @@ void SemanticAnalyser::visit(const AssignmentNode& node)
   if(analyser.getType() == TypeName::Function && node.getOperation() != AssignmentOperator::Assign)
     reportError("Cannot perform arithmetic operation on function variable " + name, node);
 
-  node.getValue().accept(*this);
+  node.getValue()->accept(*this);
 
   TypeChecker typeChecker{symbols_};
-  node.getValue().accept(typeChecker);
+  node.getValue()->accept(typeChecker);
 
   // Type checker is not be able to deduce expression's type when variable was called
   // and in that case getType has no value.

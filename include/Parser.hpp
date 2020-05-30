@@ -42,8 +42,8 @@ private:
     std::function<bool(const Token&)> operatorPredicate);
 
   TypeName parseType();
-  std::unique_ptr<ExpressionNode> parseCallArgument();
-  std::list<std::unique_ptr<ExpressionNode>> parseCallArgumentList();
+  std::shared_ptr<ExpressionNode> parseCallArgument();
+  std::list<std::shared_ptr<ExpressionNode>> parseCallArgumentList();
   std::pair<std::string, TypeName> parseArgument();
   std::list<std::pair<std::string, TypeName>> parseArgumentList();
 

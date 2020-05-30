@@ -71,7 +71,7 @@ void PrintVisitor::visit(const AssignmentNode& node)
 
   auto visitor = PrintVisitor{stream_, indentation_ + 1};
   stream_ << indent() << "Value:\n";
-  node.getValue().accept(visitor);
+  node.getValue()->accept(visitor);
 }
 
 void PrintVisitor::visit(const ReturnNode& node)

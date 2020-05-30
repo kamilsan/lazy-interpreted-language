@@ -40,11 +40,13 @@ private:
 class RuntimeFunctionAnalyser: public RuntimeSymbolVisitor
 {
 public:
+  using ArgumentsList = std::list<std::pair<std::string, TypeName>>;
+
   RuntimeFunctionAnalyser();
 
   bool isSymbolValid() const { return symbolValid_; }
   std::optional<TypeName> getReturnType() const { return returnType_; }
-  const std::list<TypeName>& getArguments() const { return arguments_; }
+  const ArgumentsList& getArguments() const { return arguments_; }
   const std::shared_ptr<BlockNode>& getBody() const { return body_; }
 
   void visit(RuntimeVariableSymbol&) override;
@@ -52,8 +54,19 @@ public:
 private:
   bool symbolValid_;
   std::optional<TypeName> returnType_;
-  std::list<TypeName> arguments_;
+  ArgumentsList arguments_;
   std::shared_ptr<BlockNode> body_;
+};
+
+class ValueChanger : public RuntimeSymbolVisitor
+{
+public:
+  ValueChanger(std::shared_ptr<ExpressionNode> value): value_(std::move(value)) {}
+
+  void visit(RuntimeVariableSymbol&) override;
+  void visit(RuntimeFunctionSymbol&) override;
+private:
+  std::shared_ptr<ExpressionNode> value_;
 };
 
 class RuntimeSymbol
@@ -72,6 +85,8 @@ public:
   const TypeName& getType() const { return type_; }
   const std::shared_ptr<ExpressionNode>& getValue() const { return value_; }
 
+  void setValue(std::shared_ptr<ExpressionNode> value) { value_ = std::move(value); }
+
   void accept(RuntimeSymbolVisitor& visitor) { visitor.visit(*this); };
 private:
   std::string name_;
@@ -82,18 +97,21 @@ private:
 class RuntimeFunctionSymbol : public RuntimeSymbol
 {
 public:
+  using Argument = std::pair<std::string, TypeName>;
+  using ArgumentsList = std::list<Argument>;
+
   RuntimeFunctionSymbol(const std::string& name, const TypeName& returnType, 
-    const std::list<TypeName>& arguments, std::shared_ptr<BlockNode> body):
+    const ArgumentsList& arguments, std::shared_ptr<BlockNode> body):
       name_(name), returnType_(returnType), arguments_(arguments), body_(std::move(body)) {}
   RuntimeFunctionSymbol(const std::string& name, const TypeName& returnType, std::shared_ptr<BlockNode> body):
     name_(name), returnType_(returnType), arguments_(), body_(std::move(body)) {}
 
   const std::string& getName() const { return name_; }
   const TypeName& getReturnType() const { return returnType_; }
-  const std::list<TypeName>& getArguments() const { return arguments_; }
+  const ArgumentsList& getArguments() const { return arguments_; }
   const std::shared_ptr<BlockNode>& getBody() const { return body_; }
 
-  void addArgument(const TypeName& type)
+  void addArgument(const Argument& type)
   {
     arguments_.push_back(type);
   }
@@ -102,7 +120,7 @@ public:
 private:
   std::string name_;
   TypeName returnType_;
-  std::list<TypeName> arguments_;
+  ArgumentsList arguments_;
   std::shared_ptr<BlockNode> body_;
 };
 

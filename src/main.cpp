@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
     SemanticAnalyser semantic{};
     Executor executor{};
     
-    auto program = parser.parseBlock();
+    auto program = parser.parseProgram();
     program->accept(semantic);
     program->accept(executor);
     

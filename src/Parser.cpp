@@ -474,10 +474,10 @@ TypeName Parser::parseType()
     reportError("Expected type name!");
 }
 
-std::list<std::unique_ptr<ExpressionNode>> Parser::parseCallArgumentList()
+std::list<std::shared_ptr<ExpressionNode>> Parser::parseCallArgumentList()
 {
   expectToken(TokenType::LParen, "Expected open parenthesis!");
-  std::list<std::unique_ptr<ExpressionNode>> arguments{};
+  std::list<std::shared_ptr<ExpressionNode>> arguments{};
   auto token = tokenizer_.peek();
   if(token.type != TokenType::RParen)
   {
@@ -497,7 +497,7 @@ std::list<std::unique_ptr<ExpressionNode>> Parser::parseCallArgumentList()
   return arguments;
 }
 
-std::unique_ptr<ExpressionNode> Parser::parseCallArgument()
+std::shared_ptr<ExpressionNode> Parser::parseCallArgument()
 {
   const auto token = tokenizer_.peek();
   if(token.type == TokenType::String)

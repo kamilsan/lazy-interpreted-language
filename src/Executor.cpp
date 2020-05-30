@@ -5,9 +5,12 @@
 
 #include "AST.hpp"
 
-void Executor::visit(const AssignmentNode&)
+void Executor::visit(const AssignmentNode& node)
 {
-  
+  const auto name = node.getName();
+  auto symbol = context_.lookup(name);
+  ValueChanger valueChanger{node.getValue()};
+  symbol.value().get().accept(valueChanger);
 }
 
 void Executor::visit(const BinaryOpNode& node)
@@ -178,6 +181,30 @@ void Executor::visit(const FunctionCallNode& node)
     const auto str = std::get<std::string>(value_);
     std::cout << str << "\n";
   }
+  else
+  {
+    const auto symbol = context_.lookup(name);
+    auto functionAnalyser = RuntimeFunctionAnalyser{};
+    symbol.value().get().accept(functionAnalyser);
+
+    context_.enterScope();
+
+    auto it = node.getArguments().begin();
+    for(const auto& arg : functionAnalyser.getArguments())
+    {
+      const auto argName = arg.first;
+      const auto type = arg.second;
+      std::shared_ptr<ExpressionNode> value = *it;
+      auto argSymbol = std::make_unique<RuntimeVariableSymbol>(argName, type, value);
+      context_.addSymbol(argName, std::move(argSymbol));
+
+      ++it;
+    }
+
+    functionAnalyser.getBody()->accept(*this);
+
+    context_.leaveScope();
+  }
 }
 
 void Executor::visit(const FunctionCallStatementNode& node)
@@ -185,24 +212,32 @@ void Executor::visit(const FunctionCallStatementNode& node)
   node.getFunctionCall().accept(*this);
 }
 
-void Executor::visit(const FunctionDeclarationNode&)
+void Executor::visit(const FunctionDeclarationNode& node)
 {
-  
+  const auto name = node.getName();
+  const auto type = node.getReturnType();
+  auto symbol = std::make_unique<RuntimeFunctionSymbol>(name, type, node.getBody());
+  for(const auto& arg : node.getArguments())
+  {
+    symbol->addArgument(RuntimeFunctionSymbol::Argument{arg.first, arg.second});
+  }
+
+  context_.addSymbol(name, std::move(symbol));
 }
 
 void Executor::visit(const FunctionResultCallNode&)
 {
-  
+
 }
 
 void Executor::visit(const LambdaCallNode&)
 {
-  
+
 }
 
 void Executor::visit(const LambdaNode&)
 {
-  
+
 }
 
 void Executor::visit(const NumericLiteralNode& node)
@@ -210,14 +245,24 @@ void Executor::visit(const NumericLiteralNode& node)
   value_ = node.getValue();
 }
 
-void Executor::visit(const ProgramNode&)
+void Executor::visit(const ProgramNode& node)
 {
-  
+  for(const auto& variable : node.getVariables())
+    variable->accept(*this);
+
+  for(const auto& function : node.getFunctions())
+    function->accept(*this);
+
+  const auto mainSymbol = context_.lookup("main");
+  auto functionAnalyser = RuntimeFunctionAnalyser{};
+  mainSymbol.value().get().accept(functionAnalyser);
+
+  functionAnalyser.getBody()->accept(*this);
 }
 
 void Executor::visit(const ReturnNode&)
 {
-  
+
 }
 
 void Executor::visit(const StringLiteralNode& node)

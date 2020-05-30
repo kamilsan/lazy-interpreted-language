@@ -39,17 +39,17 @@ TEST(ParserTest, SimpleTerms)
 TEST(ParserTest, FunctionCalls)
 {
   const auto func = std::bind(&Parser::parseFunctionCall, std::placeholders::_1, std::optional<Token>{});
-  std::list<std::unique_ptr<ExpressionNode>> arguments{};
+  std::list<std::shared_ptr<ExpressionNode>> arguments{};
   setupTest("f()", func, std::make_unique<FunctionCallNode>("f", std::move(arguments)));
 
-  arguments = std::list<std::unique_ptr<ExpressionNode>>{};
+  arguments = std::list<std::shared_ptr<ExpressionNode>>{};
   arguments.push_back(std::make_unique<VariableNode>("x"));
   setupTest("xyz(x)", func, std::make_unique<FunctionCallNode>("xyz", std::move(arguments)));
 
-  arguments = std::list<std::unique_ptr<ExpressionNode>>{};
-  arguments.push_back(std::make_unique<VariableNode>("x"));
-  arguments.push_back(std::make_unique<NumericLiteralNode>(2));
-  arguments.push_back(std::make_unique<VariableNode>("z"));
+  arguments = std::list<std::shared_ptr<ExpressionNode>>{};
+  arguments.push_back(std::make_shared<VariableNode>("x"));
+  arguments.push_back(std::make_shared<NumericLiteralNode>(2));
+  arguments.push_back(std::make_shared<VariableNode>("z"));
   setupTest("g(x, 2, z)", func, std::make_unique<FunctionCallNode>("g", std::move(arguments)));
 }
 
@@ -88,11 +88,11 @@ TEST(ParserTest, StringExpressions)
 TEST(ParserTest, SpecialFunctionCalls)
 {
   const auto func = std::bind(&Parser::parseFunctionCall, std::placeholders::_1, std::optional<Token>{});
-  std::list<std::unique_ptr<ExpressionNode>> arguments{};
+  std::list<std::shared_ptr<ExpressionNode>> arguments{};
   arguments.push_back(std::make_unique<StringLiteralNode>("test"));
   setupTest("print(\"test\")", func, std::make_unique<FunctionCallNode>("print", std::move(arguments)));
 
-  arguments = std::list<std::unique_ptr<ExpressionNode>>{};
+  arguments = std::list<std::shared_ptr<ExpressionNode>>{};
   arguments.push_back(std::make_unique<NumericLiteralNode>(1));
   arguments.push_back(std::make_unique<NumericLiteralNode>(2));
   arguments.push_back(std::make_unique<VariableNode>("z"));
@@ -505,7 +505,7 @@ TEST(ParserTest, Block)
   setupTest("{ x=7; }", &Parser::parseBlock, std::move(block));
 
   block = std::make_unique<BlockNode>();
-  auto args = std::list<std::unique_ptr<ExpressionNode>>{};
+  auto args = std::list<std::shared_ptr<ExpressionNode>>{};
   args.push_back(std::make_unique<StringLiteralNode>("test"));
   block->addStatement(
     std::make_unique<FunctionCallStatementNode>(std::make_unique<FunctionCallNode>(
@@ -638,7 +638,7 @@ TEST(ParserTest, CallingLambda)
     std::move(args),
     std::move(block)
   );
-  std::list<std::unique_ptr<ExpressionNode>> callArgs{};
+  std::list<std::shared_ptr<ExpressionNode>> callArgs{};
   callArgs.push_back(std::make_unique<NumericLiteralNode>(3));
   auto node = std::make_unique<LambdaCallNode>(std::move(lambda), std::move(callArgs));
   setupTest("(\\(x: f32): void = {})(3)", func, std::move(node));
@@ -677,7 +677,7 @@ TEST(ParserTest, LambdaAsCallArgument)
     std::move(block)
   );
 
-  std::list<std::unique_ptr<ExpressionNode>> callArgs{};
+  std::list<std::shared_ptr<ExpressionNode>> callArgs{};
   callArgs.push_back(std::move(lambda));
   auto node = std::make_unique<FunctionCallNode>(
     "func",
@@ -723,11 +723,11 @@ TEST(ParserTest, InvalidLambdaAssignmentThrows)
 TEST(ParserTest, CallingFunctionResult)
 {
   const auto func = std::bind(&Parser::parseFunctionCall, std::placeholders::_1, std::optional<Token>{});
-  std::list<std::unique_ptr<ExpressionNode>> arguments{};
+  std::list<std::shared_ptr<ExpressionNode>> arguments{};
   arguments.push_back(std::make_unique<VariableNode>("x"));
   arguments.push_back(std::make_unique<NumericLiteralNode>(2));
 
-  std::list<std::unique_ptr<ExpressionNode>> args2{};
+  std::list<std::shared_ptr<ExpressionNode>> args2{};
   args2.push_back(std::make_unique<NumericLiteralNode>(10));
 
   auto funcCallNode = std::make_unique<FunctionCallNode>("f", std::move(arguments));

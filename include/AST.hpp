@@ -226,32 +226,32 @@ class FunctionResultCallNode : public ExpressionNode
 {
 public:
   FunctionResultCallNode(std::unique_ptr<ExpressionNode> call, 
-    std::list<std::unique_ptr<ExpressionNode>> arguments):
+    std::list<std::shared_ptr<ExpressionNode>> arguments):
       call_(std::move(call)), arguments_(std::move(arguments)) {}
 
   const ExpressionNode& getCall() const { return *call_; }
-  const std::list<std::unique_ptr<ExpressionNode>>& getArguments() const { return arguments_; }
+  const std::list<std::shared_ptr<ExpressionNode>>& getArguments() const { return arguments_; }
 
   void accept(Visitor& visitor) const override { visitor.visit(*this); }
 private:
   std::unique_ptr<ExpressionNode> call_;
-  std::list<std::unique_ptr<ExpressionNode>> arguments_;
+  std::list<std::shared_ptr<ExpressionNode>> arguments_;
 };
 
 class FunctionCallNode : public ExpressionNode
 {
 public:
   FunctionCallNode(const std::string& name, 
-    std::list<std::unique_ptr<ExpressionNode>> arguments):
+    std::list<std::shared_ptr<ExpressionNode>> arguments):
       name_(name), arguments_(std::move(arguments)) {}
 
   const std::string& getName() const { return name_; }
-  const std::list<std::unique_ptr<ExpressionNode>>& getArguments() const { return arguments_; }
+  const std::list<std::shared_ptr<ExpressionNode>>& getArguments() const { return arguments_; }
 
   void accept(Visitor& visitor) const override { visitor.visit(*this); }
 private:
   std::string name_;
-  std::list<std::unique_ptr<ExpressionNode>> arguments_;
+  std::list<std::shared_ptr<ExpressionNode>> arguments_;
 };
 
 class LambdaNode : public ExpressionNode
@@ -276,16 +276,16 @@ class LambdaCallNode : public ExpressionNode
 {
 public:
   LambdaCallNode(std::unique_ptr<LambdaNode> lambda, 
-    std::list<std::unique_ptr<ExpressionNode>> arguments):
+    std::list<std::shared_ptr<ExpressionNode>> arguments):
       lambda_(std::move(lambda)), arguments_(std::move(arguments)) {}
 
   const LambdaNode& getLambda() const { return *lambda_; }
-  const std::list<std::unique_ptr<ExpressionNode>>& getArguments() const { return arguments_; }
+  const std::list<std::shared_ptr<ExpressionNode>>& getArguments() const { return arguments_; }
 
   void accept(Visitor& visitor) const override { visitor.visit(*this); }
 private:
   std::unique_ptr<LambdaNode> lambda_;
-  std::list<std::unique_ptr<ExpressionNode>> arguments_;
+  std::list<std::shared_ptr<ExpressionNode>> arguments_;
 };
 
 class VariableDeclarationNode : public StatementNode
@@ -315,13 +315,13 @@ public:
 
   const std::string& getName() const { return name_; }
   const AssignmentOperator& getOperation() const { return operator_; }
-  const ExpressionNode& getValue() const { return *value_; }
+  const std::shared_ptr<ExpressionNode>& getValue() const { return value_; }
 
   void accept(Visitor& visitor) const override { visitor.visit(*this); }
 private:
   std::string name_;
   AssignmentOperator operator_;
-  std::unique_ptr<ExpressionNode> value_;
+  std::shared_ptr<ExpressionNode> value_;
 };
 
 class ReturnNode : public StatementNode

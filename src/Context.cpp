@@ -1,6 +1,5 @@
 #include "Context.hpp"
 
-
 RuntimeVariableAnalyser::RuntimeVariableAnalyser():
   symbolValid_(false), type_(), value_(nullptr) {}
 
@@ -32,6 +31,15 @@ void RuntimeFunctionAnalyser::visit(RuntimeFunctionSymbol& symbol)
   body_ = symbol.getBody();
 }
 
+void ValueChanger::visit(RuntimeVariableSymbol& symbol)
+{
+  symbol.setValue(value_);
+}
+
+void ValueChanger::visit(RuntimeFunctionSymbol&)
+{
+
+}
 
 Context::Context(): scopes_()
 {
