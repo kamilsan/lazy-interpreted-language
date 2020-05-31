@@ -1,12 +1,16 @@
 #include "Context.hpp"
 
+
+#include "Executor.hpp"
+
 RuntimeVariableAnalyser::RuntimeVariableAnalyser():
-  symbolValid_(false), type_(), value_(nullptr) {}
+  symbolValid_(false), type_(), value_(nullptr), context_() {}
 
 void RuntimeVariableAnalyser::visit(RuntimeVariableSymbol& symbol)
 {
   type_ = symbol.getType();
   value_ = symbol.getValue();
+  context_ = symbol.getContext();
   symbolValid_ = true;
 }
 
@@ -43,13 +47,13 @@ void ValueChanger::visit(RuntimeFunctionSymbol&)
 
 Context::Context(): scopes_()
 {
-  auto globalScope = std::unordered_map<std::string, std::unique_ptr<RuntimeSymbol>>();
+  auto globalScope = std::unordered_map<std::string, std::shared_ptr<RuntimeSymbol>>();
   scopes_.push_back(std::move(globalScope));
 }
 
 void Context::enterScope()
 {
-  auto localScope = std::unordered_map<std::string, std::unique_ptr<RuntimeSymbol>>();
+  auto localScope = std::unordered_map<std::string, std::shared_ptr<RuntimeSymbol>>();
   scopes_.push_back(std::move(localScope));
 }
 
@@ -58,9 +62,52 @@ void Context::leaveScope()
   scopes_.pop_back();
 }
 
-void Context::addSymbol(const std::string& name, std::unique_ptr<RuntimeSymbol> symbol)
+void Context::addSymbol(const std::string& name, std::shared_ptr<RuntimeSymbol> symbol)
 {
-  scopes_.back().insert(std::pair<std::string, std::unique_ptr<RuntimeSymbol>>{name, std::move(symbol)});
+  scopes_.back().insert(std::pair<std::string, std::shared_ptr<RuntimeSymbol>>{name, std::move(symbol)});
+}
+
+#include <iostream>
+
+void Context::debug() const
+{
+  int depth = scopes_.size();
+  for(auto scopesIt = scopes_.crbegin(); scopesIt != scopes_.crend(); ++scopesIt, --depth)
+  {
+    std::cout << "Symbols in scope " << depth << "\n";
+    for(const auto& symbol : *scopesIt)
+    {
+      const auto name = symbol.first;
+      const auto sym = symbol.second;
+
+      RuntimeVariableAnalyser vis{};
+      sym->accept(vis);
+      if(vis.isSymbolValid())
+      {
+        Executor executor{vis.getContext()};
+        vis.getValue()->accept(executor);
+        std::cout << "Variable " << name << " with value " << std::get<double>(executor.getValue()) << "\n";
+      }
+      else
+        std::cout << "Function " << name << "\n";
+    }
+  }
+}
+
+Context Context::clone() const
+{
+  Context newContext{};
+  for(auto scopesIt = scopes_.cbegin(); scopesIt != scopes_.cend(); ++scopesIt)
+  {
+    for(const auto& symbol : *scopesIt)
+    {
+      newContext.addSymbol(symbol.first, symbol.second);
+    }
+
+    if(scopesIt + 1 != scopes_.cend())
+      newContext.enterScope();
+  }
+  return newContext;
 }
 
 std::optional<std::reference_wrapper<RuntimeSymbol>> Context::lookup(const std::string& name, int maxDepth) const

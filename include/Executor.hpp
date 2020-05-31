@@ -5,11 +5,13 @@
 
 #include <variant>
 #include <string>
+#include <stack>
 
 class Executor : public Visitor
 {
 public:
-  Executor(): value_() {}
+  Executor(): value_(), context_(), returnStack_() {}
+  Executor(const Context& context): value_(), context_(context), returnStack_() {}
 
   const std::variant<double, std::string>& getValue() const { return value_; }
 
@@ -31,6 +33,9 @@ public:
   void visit(const VariableNode&) override;
 
 private:
-  std::variant<double, std::string> value_;
+  using Value = std::variant<double, std::string>;
+
+  Value value_;
   Context context_;
+  std::stack<Value> returnStack_;
 };

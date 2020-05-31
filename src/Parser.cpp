@@ -102,7 +102,7 @@ std::unique_ptr<ExpressionNode> Parser::parseStringExpression()
     else
     {
       auto left = std::move(node);
-      auto right = parseArithmeticExpression();
+      auto right = parseLogicalExpression();
       node = std::make_unique<BinaryOpNode>(std::move(left), BinaryOperator::Addition, std::move(right));
       token = tokenizer_.peek();
     }

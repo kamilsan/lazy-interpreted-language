@@ -47,21 +47,21 @@ void Executor::visit(const BinaryOpNode& node)
     {
       const auto l = std::get<double>(left);
       const auto r = std::get<double>(right);
-      value_ = static_cast<int>(l) & static_cast<int>(r);
+      value_ = static_cast<unsigned int>(l) & static_cast<unsigned int>(r);
       break;
     }
     case BinaryOperator::BinaryOr:
     {
       const auto l = std::get<double>(left);
       const auto r = std::get<double>(right);
-      value_ =  static_cast<int>(l) | static_cast<int>(r);
+      value_ =  static_cast<unsigned int>(l) | static_cast<unsigned int>(r);
       break;
     }
     case BinaryOperator::BinaryXor:
     {
       const auto l = std::get<double>(left);
       const auto r = std::get<double>(right);
-      value_ =  static_cast<int>(l) ^ static_cast<int>(r);
+      value_ =  static_cast<unsigned int>(l) ^ static_cast<unsigned int>(r);
       break;
     }
     case BinaryOperator::Division:
@@ -145,14 +145,14 @@ void Executor::visit(const BinaryOpNode& node)
     {
       const auto l = std::get<double>(left);
       const auto r = std::get<double>(right);
-      value_ = static_cast<int>(l) << static_cast<int>(r);
+      value_ = static_cast<unsigned int>(l) << static_cast<unsigned int>(r);
       break;
     }
     case BinaryOperator::ShiftRight:
     {
       const auto l = std::get<double>(left);
       const auto r = std::get<double>(right);
-      value_ = static_cast<int>(l) >> static_cast<int>(r);
+      value_ = static_cast<unsigned int>(l) >> static_cast<unsigned int>(r);
       break;
     }
     case BinaryOperator::Subtraction:
@@ -181,6 +181,22 @@ void Executor::visit(const FunctionCallNode& node)
     const auto str = std::get<std::string>(value_);
     std::cout << str << "\n";
   }
+  else if(name == "if")
+  {
+    const auto& args = node.getArguments();
+    auto it = args.begin();
+    (*it)->accept(*this);
+    const auto condition = std::get<double>(value_);
+    if(std::fabs(condition) > 0.0001)
+    {
+      it++;
+      (*it)->accept(*this);
+    }
+    else
+    {
+      args.back()->accept(*this);
+    }
+  }
   else
   {
     const auto symbol = context_.lookup(name);
@@ -195,7 +211,8 @@ void Executor::visit(const FunctionCallNode& node)
       const auto argName = arg.first;
       const auto type = arg.second;
       std::shared_ptr<ExpressionNode> value = *it;
-      auto argSymbol = std::make_unique<RuntimeVariableSymbol>(argName, type, value);
+      value->accept(*this);
+      auto argSymbol = std::make_unique<RuntimeVariableSymbol>(argName, type, value, context_.clone());
       context_.addSymbol(argName, std::move(argSymbol));
 
       ++it;
@@ -204,6 +221,12 @@ void Executor::visit(const FunctionCallNode& node)
     functionAnalyser.getBody()->accept(*this);
 
     context_.leaveScope();
+
+    if(functionAnalyser.getReturnType() != TypeName::Void)
+    {
+      value_ = returnStack_.top();
+      returnStack_.pop();
+    }
   }
 }
 
@@ -257,12 +280,16 @@ void Executor::visit(const ProgramNode& node)
   auto functionAnalyser = RuntimeFunctionAnalyser{};
   mainSymbol.value().get().accept(functionAnalyser);
 
+  context_.enterScope();
   functionAnalyser.getBody()->accept(*this);
+  context_.leaveScope();
 }
 
-void Executor::visit(const ReturnNode&)
+void Executor::visit(const ReturnNode& node)
 {
-
+  node.getValue().accept(*this);
+  auto const returnedValue = value_;
+  returnStack_.push(returnedValue);
 }
 
 void Executor::visit(const StringLiteralNode& node)
@@ -272,14 +299,13 @@ void Executor::visit(const StringLiteralNode& node)
 
 void Executor::visit(const UnaryNode& node)
 {
-  auto termExecutor = Executor{};
-  node.getTerm().accept(termExecutor);
-  auto term = std::get<double>(termExecutor.getValue());
+  node.getTerm().accept(*this);
+  auto term = std::get<double>(value_);
 
   switch(node.getOperation())
   {
     case UnaryOperator::BinaryNegation:
-      value_ = ~static_cast<int>(term);
+      value_ = ~static_cast<unsigned int>(term);
       break;
     case UnaryOperator::LogicalNot:
       value_ = term == 0 ? 1 : 0;
@@ -296,7 +322,7 @@ void Executor::visit(const VariableDeclarationNode& node)
   const auto type = node.getType();
   auto value = node.getValue();
 
-  auto symbol = std::make_unique<RuntimeVariableSymbol>(name, type, value);
+  auto symbol = std::make_unique<RuntimeVariableSymbol>(name, type, value, context_.clone());
   context_.addSymbol(name, std::move(symbol));
 }
 
@@ -309,5 +335,11 @@ void Executor::visit(const VariableNode& node)
   symbol.value().get().accept(analyser);
 
   const auto& value = analyser.getValue();
-  value->accept(*this);
+  auto executor = Executor{analyser.getContext()};
+
+  std::cout << "Evaluating variable " << name << " in context:\n";
+  analyser.getContext().debug();
+
+  value->accept(executor);
+  value_ = executor.getValue();
 }

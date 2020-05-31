@@ -10,6 +10,7 @@
 
 #include "AST.hpp"
 
+class RuntimeSymbol;
 class RuntimeVariableSymbol;
 class RuntimeFunctionSymbol;
 
@@ -20,6 +21,22 @@ public:
   virtual void visit(RuntimeFunctionSymbol&) = 0;
 };
 
+class Context
+{
+public:
+  Context();
+
+  void debug() const;
+  Context clone() const;
+  void enterScope();
+  void leaveScope();
+  void addSymbol(const std::string& name, std::shared_ptr<RuntimeSymbol> symbol);
+  std::optional<std::reference_wrapper<RuntimeSymbol>> lookup(const std::string& name, int maxDepth = 0) const;
+
+private:
+  std::deque<std::unordered_map<std::string, std::shared_ptr<RuntimeSymbol>>> scopes_;
+};
+
 class RuntimeVariableAnalyser: public RuntimeSymbolVisitor
 {
 public:
@@ -28,6 +45,7 @@ public:
   bool isSymbolValid() const { return symbolValid_; }
   std::optional<TypeName> getType() const { return type_; }
   const std::shared_ptr<ExpressionNode>& getValue() const { return value_; }
+  const Context& getContext() const { return context_->get(); }
 
   void visit(RuntimeVariableSymbol&) override;
   void visit(RuntimeFunctionSymbol&) override;
@@ -35,6 +53,7 @@ private:
   bool symbolValid_;
   std::optional<TypeName> type_;
   std::shared_ptr<ExpressionNode> value_;
+  std::optional<std::reference_wrapper<const Context>> context_;
 };
 
 class RuntimeFunctionAnalyser: public RuntimeSymbolVisitor
@@ -78,12 +97,14 @@ public:
 class RuntimeVariableSymbol : public RuntimeSymbol
 {
 public:
-  RuntimeVariableSymbol(const std::string& name, const TypeName& type, std::shared_ptr<ExpressionNode> value):
-    name_(name), type_(type), value_(std::move(value)) {}
+  RuntimeVariableSymbol(const std::string& name, const TypeName& type,
+          std::shared_ptr<ExpressionNode> value, const Context& context):
+    name_(name), type_(type), value_(std::move(value)), context_(context) {}
 
   const std::string& getName() const { return name_; }
   const TypeName& getType() const { return type_; }
   const std::shared_ptr<ExpressionNode>& getValue() const { return value_; }
+  const Context& getContext() const { return context_; }
 
   void setValue(std::shared_ptr<ExpressionNode> value) { value_ = std::move(value); }
 
@@ -92,6 +113,7 @@ private:
   std::string name_;
   TypeName type_;
   std::shared_ptr<ExpressionNode> value_;
+  Context context_;
 };
 
 class RuntimeFunctionSymbol : public RuntimeSymbol
@@ -122,18 +144,4 @@ private:
   TypeName returnType_;
   ArgumentsList arguments_;
   std::shared_ptr<BlockNode> body_;
-};
-
-class Context
-{
-public:
-  Context();
-
-  void enterScope();
-  void leaveScope();
-  void addSymbol(const std::string& name, std::unique_ptr<RuntimeSymbol> symbol);
-  std::optional<std::reference_wrapper<RuntimeSymbol>> lookup(const std::string& name, int maxDepth = 0) const;
-
-private:
-  std::deque<std::unordered_map<std::string, std::unique_ptr<RuntimeSymbol>>> scopes_;
 };
