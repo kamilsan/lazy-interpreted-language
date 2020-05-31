@@ -92,6 +92,7 @@ class RuntimeSymbol
 {
 public:
   virtual void accept(RuntimeSymbolVisitor&) = 0;
+  virtual std::shared_ptr<RuntimeSymbol> clone(const Context& context) const = 0;
 };
 
 class RuntimeVariableSymbol : public RuntimeSymbol
@@ -108,7 +109,8 @@ public:
 
   void setValue(std::shared_ptr<ExpressionNode> value) { value_ = std::move(value); }
 
-  void accept(RuntimeSymbolVisitor& visitor) { visitor.visit(*this); };
+  std::shared_ptr<RuntimeSymbol> clone(const Context& context) const override;
+  void accept(RuntimeSymbolVisitor& visitor) override { visitor.visit(*this); };
 private:
   std::string name_;
   TypeName type_;
@@ -138,7 +140,8 @@ public:
     arguments_.push_back(type);
   }
 
-  void accept(RuntimeSymbolVisitor& visitor) { visitor.visit(*this); };
+  std::shared_ptr<RuntimeSymbol> clone(const Context& context) const override;
+  void accept(RuntimeSymbolVisitor& visitor) override { visitor.visit(*this); };
 private:
   std::string name_;
   TypeName returnType_;

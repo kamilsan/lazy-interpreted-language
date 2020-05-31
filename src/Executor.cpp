@@ -405,9 +405,6 @@ void Executor::visit(const VariableNode& node)
   const auto& value = analyser.getValue();
   auto executor = Executor{analyser.getContext()};
 
-  //std::cout << "Evaluating variable " << name << " in context:\n";
-  //analyser.getContext().debug();
-
   value->accept(executor);
   value_ = executor.getValue();
 }

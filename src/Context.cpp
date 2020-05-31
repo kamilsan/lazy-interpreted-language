@@ -1,7 +1,14 @@
 #include "Context.hpp"
 
+std::shared_ptr<RuntimeSymbol> RuntimeVariableSymbol::clone(const Context& context) const
+{
+  return std::make_shared<RuntimeVariableSymbol>(name_, type_, value_, context);
+}
 
-#include "Executor.hpp"
+std::shared_ptr<RuntimeSymbol> RuntimeFunctionSymbol::clone(const Context&) const
+{
+  return std::make_shared<RuntimeFunctionSymbol>(name_, returnType_, arguments_, body_);
+}
 
 RuntimeVariableAnalyser::RuntimeVariableAnalyser():
   symbolValid_(false), type_(), value_(nullptr), context_() {}
@@ -67,33 +74,6 @@ void Context::addSymbol(const std::string& name, std::shared_ptr<RuntimeSymbol> 
   scopes_.back().insert(std::pair<std::string, std::shared_ptr<RuntimeSymbol>>{name, std::move(symbol)});
 }
 
-#include <iostream>
-
-void Context::debug() const
-{
-  int depth = scopes_.size();
-  for(auto scopesIt = scopes_.crbegin(); scopesIt != scopes_.crend(); ++scopesIt, --depth)
-  {
-    //std::cout << "Symbols in scope " << depth << "\n";
-    for(const auto& symbol : *scopesIt)
-    {
-      const auto name = symbol.first;
-      const auto sym = symbol.second;
-
-      RuntimeVariableAnalyser vis{};
-      sym->accept(vis);
-      if(vis.isSymbolValid())
-      {
-        Executor executor{vis.getContext()};
-        vis.getValue()->accept(executor);
-        //std::cout << "Variable " << name << " with value " << std::get<double>(executor.getValue()) << "\n";
-      }
-      else{}
-        //std::cout << "Function " << name << "\n";
-    }
-  }
-}
-
 Context Context::clone() const
 {
   Context newContext{};
@@ -101,7 +81,8 @@ Context Context::clone() const
   {
     for(const auto& symbol : *scopesIt)
     {
-      newContext.addSymbol(symbol.first, symbol.second);
+      const auto name = symbol.first;
+      newContext.addSymbol(name, symbol.second->clone(newContext));
     }
 
     if(scopesIt + 1 != scopes_.cend())

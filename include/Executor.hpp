@@ -7,6 +7,8 @@
 #include <string>
 #include <stack>
 
+#include <iostream>
+
 class Executor : public Visitor
 {
 public:
