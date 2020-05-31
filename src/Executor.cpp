@@ -20,10 +20,14 @@ void Executor::visit(const AssignmentNode& node)
     symbol.value().get().accept(analyser);
     Executor executor{analyser.getContext()};
     analyser.getValue()->accept(executor);
-    const auto oldValue = std::get<double>(executor.getValue());
+
+    NumberValueAnalyser valueAnalyser{};
+    executor.getValue()->accept(valueAnalyser);
+    const auto oldValue = valueAnalyser.getValue().value();
 
     node.getValue()->accept(*this);
-    const auto rhs = std::get<double>(value_);
+    value_->accept(valueAnalyser);
+    const auto rhs = valueAnalyser.getValue().value();
 
     double newValue = oldValue;
     switch(node.getOperation())
@@ -67,152 +71,115 @@ void Executor::visit(const AssignmentNode& node)
 void Executor::visit(const BinaryOpNode& node)
 {
   node.getLeftOperand().accept(*this);
-  auto left = value_;
+  auto left = std::move(value_);
 
   node.getRightOperand().accept(*this);
-  auto right = value_;
+  auto right = std::move(value_);
 
-  switch(node.getOperation())
+  if(node.getOperation() == BinaryOperator::Addition)
   {
-    case BinaryOperator::Addition:
+    if(left->getType() == TypeName::String)
     {
-      if(std::holds_alternative<std::string>(left))
+      StringValueAnalyser valueAnalyser{};
+      left->accept(valueAnalyser);
+
+      const auto l = valueAnalyser.getValue().value();
+      if(right->getType() == TypeName::String)
       {
-        const auto l = std::get<std::string>(left);
-        if(std::holds_alternative<std::string>(right))
-        {
-          const auto r = std::get<std::string>(right);
-          value_ = l + r;
-        }
-        else
-        {
-          const auto r = std::get<double>(right);
-          value_ = l + std::to_string(r);
-        }
+        right->accept(valueAnalyser);
+        const auto r = valueAnalyser.getValue().value();
+        value_ = std::make_unique<String>(l + r);
+      }
+      else if(right->getType() == TypeName::F32)
+      {
+        NumberValueAnalyser numberValueAnalyser{};
+        right->accept(numberValueAnalyser);
+
+        const auto r = numberValueAnalyser.getValue().value();
+        value_ = std::make_unique<String>(l + std::to_string(r));
       }
       else
-        value_ = std::get<double>(left) + std::get<double>(right);
-      break;
+        throw std::runtime_error(""); // TODO
     }
-    case BinaryOperator::BinaryAnd:
+    else
     {
-      const auto l = std::get<double>(left);
-      const auto r = std::get<double>(right);
-      value_ = static_cast<unsigned int>(l) & static_cast<unsigned int>(r);
-      break;
+      NumberValueAnalyser numberValueAnalyser{};
+      left->accept(numberValueAnalyser);
+      const auto l = numberValueAnalyser.getValue().value();
+      right->accept(numberValueAnalyser);
+      const auto r = numberValueAnalyser.getValue().value();
+
+      value_ = std::make_unique<Number>(l + r);
     }
-    case BinaryOperator::BinaryOr:
+  }
+  else {
+    NumberValueAnalyser valueAnalyser{};
+    left->accept(valueAnalyser);
+    const auto l = valueAnalyser.getValue().value();
+
+    right->accept(valueAnalyser);
+    const auto r = valueAnalyser.getValue().value();
+
+    auto newValue = l;
+
+    switch (node.getOperation())
     {
-      const auto l = std::get<double>(left);
-      const auto r = std::get<double>(right);
-      value_ =  static_cast<unsigned int>(l) | static_cast<unsigned int>(r);
-      break;
+      case BinaryOperator::BinaryAnd:
+        newValue = static_cast<unsigned int>(l) & static_cast<unsigned int>(r);
+        break;
+      case BinaryOperator::BinaryOr:
+        newValue = static_cast<unsigned int>(l) | static_cast<unsigned int>(r);
+        break;
+      case BinaryOperator::BinaryXor:
+        newValue = static_cast<unsigned int>(l) ^ static_cast<unsigned int>(r);
+        break;
+      case BinaryOperator::Division:
+        newValue = l / r;
+        break;
+      case BinaryOperator::Equal:
+        newValue = l == r ? 1 : 0;
+        break;
+        case BinaryOperator::Greater:
+        newValue = l > r ? 1 : 0;
+        break;
+      case BinaryOperator::GreaterEq:
+        newValue = l >= r ? 1 : 0;
+        break;
+      case BinaryOperator::Less:
+        newValue = l < r ? 1 : 0;
+        break;
+      case BinaryOperator::LessEq:
+        newValue = l <= r ? 1 : 0;
+        break;
+      case BinaryOperator::LogicalAnd:
+        newValue = l && r;
+        break;
+      case BinaryOperator::LogicalOr:
+        newValue = l || r;
+        break;
+      case BinaryOperator::Modulo:
+        newValue = std::fmod(l, r);
+        break;
+      case BinaryOperator::Multiplication:
+        newValue = l * r;
+        break;
+      case BinaryOperator::NotEqual:
+        newValue = l != r ? 1 : 0;
+        break;
+      case BinaryOperator::ShiftLeft:
+        newValue = static_cast<unsigned int>(l) << static_cast<unsigned int>(r);
+        break;
+      case BinaryOperator::ShiftRight:
+        newValue = static_cast<unsigned int>(l) >> static_cast<unsigned int>(r);
+        break;
+      case BinaryOperator::Subtraction:
+        newValue = l - r;
+        break;
+      case BinaryOperator::Addition:
+        break; // Unreachable
     }
-    case BinaryOperator::BinaryXor:
-    {
-      const auto l = std::get<double>(left);
-      const auto r = std::get<double>(right);
-      value_ =  static_cast<unsigned int>(l) ^ static_cast<unsigned int>(r);
-      break;
-    }
-    case BinaryOperator::Division:
-    {
-      const auto l = std::get<double>(left);
-      const auto r = std::get<double>(right);
-      value_ = l / r;
-      break;
-    }
-    case BinaryOperator::Equal:
-    {
-      const auto l = std::get<double>(left);
-      const auto r = std::get<double>(right);
-      value_ = l == r ? 1 : 0;
-      break;
-    }
-    case BinaryOperator::Greater:
-    {
-      const auto l = std::get<double>(left);
-      const auto r = std::get<double>(right);
-      value_ = l > r ? 1 : 0;
-      break;
-    }
-    case BinaryOperator::GreaterEq:
-    {
-      const auto l = std::get<double>(left);
-      const auto r = std::get<double>(right);
-      value_ = l >= r ? 1 : 0;
-      break;
-    }
-    case BinaryOperator::Less:
-    {
-      const auto l = std::get<double>(left);
-      const auto r = std::get<double>(right);
-      value_ = l < r ? 1 : 0;
-      break;
-    }
-    case BinaryOperator::LessEq:
-    {
-      const auto l = std::get<double>(left);
-      const auto r = std::get<double>(right);
-      value_ = l <= r ? 1 : 0;
-      break;
-    }
-    case BinaryOperator::LogicalAnd:
-    {
-      const auto l = std::get<double>(left);
-      const auto r = std::get<double>(right);
-      value_ = l && r;
-      break;
-    }
-    case BinaryOperator::LogicalOr:
-    {
-      const auto l = std::get<double>(left);
-      const auto r = std::get<double>(right);
-      value_ = l || r;
-      break;
-    }
-    case BinaryOperator::Modulo:
-    {
-      const auto l = std::get<double>(left);
-      const auto r = std::get<double>(right);
-      value_ = std::fmod(l, r);
-      break;
-    }
-    case BinaryOperator::Multiplication:
-    {
-      const auto l = std::get<double>(left);
-      const auto r = std::get<double>(right);
-      value_ = l * r;
-      break;
-    }
-    case BinaryOperator::NotEqual:
-    {
-      const auto l = std::get<double>(left);
-      const auto r = std::get<double>(right);
-      value_ = l != r ? 1 : 0;
-      break;
-    }
-    case BinaryOperator::ShiftLeft:
-    {
-      const auto l = std::get<double>(left);
-      const auto r = std::get<double>(right);
-      value_ = static_cast<unsigned int>(l) << static_cast<unsigned int>(r);
-      break;
-    }
-    case BinaryOperator::ShiftRight:
-    {
-      const auto l = std::get<double>(left);
-      const auto r = std::get<double>(right);
-      value_ = static_cast<unsigned int>(l) >> static_cast<unsigned int>(r);
-      break;
-    }
-    case BinaryOperator::Subtraction:
-    {
-      const auto l = std::get<double>(left);
-      const auto r = std::get<double>(right);
-      value_ = l - r;
-      break;
-    }
+
+    value_ = std::make_unique<Number>(newValue);
   }
 }
 
@@ -229,7 +196,11 @@ void Executor::visit(const FunctionCallNode& node)
   {
     const auto& args = node.getArguments();
     (*args.begin())->accept(*this);
-    const auto str = std::get<std::string>(value_);
+
+    StringValueAnalyser analyser{};
+    value_->accept(analyser);
+
+    const auto str = analyser.getValue().value();
     std::cout << str << "\n";
   }
   else if(name == "if")
@@ -237,7 +208,11 @@ void Executor::visit(const FunctionCallNode& node)
     const auto& args = node.getArguments();
     auto it = args.begin();
     (*it)->accept(*this);
-    const auto condition = std::get<double>(value_);
+
+    NumberValueAnalyser analyser{};
+    value_->accept(analyser);
+    const auto condition = analyser.getValue().value();
+
     if(std::fabs(condition) > 0.0001)
     {
       it++;
@@ -274,7 +249,7 @@ void Executor::visit(const FunctionCallNode& node)
 
     if(functionAnalyser.getReturnType() != TypeName::Void)
     {
-      value_ = returnStack_.top();
+      value_ = std::move(returnStack_.top());
       returnStack_.pop();
     }
   }
@@ -333,7 +308,7 @@ void Executor::visit(const LambdaNode&)
 
 void Executor::visit(const NumericLiteralNode& node)
 {
-  value_ = node.getValue();
+  value_ = std::make_unique<Number>(node.getValue());
 }
 
 void Executor::visit(const ProgramNode& node)
@@ -356,32 +331,37 @@ void Executor::visit(const ProgramNode& node)
 void Executor::visit(const ReturnNode& node)
 {
   node.getValue().accept(*this);
-  auto const returnedValue = value_;
-  returnStack_.push(returnedValue);
+  auto returnedValue = std::move(value_);
+  returnStack_.emplace(std::move(returnedValue));
 }
 
 void Executor::visit(const StringLiteralNode& node)
 {
-  value_ = node.getValue();
+  value_ = std::make_unique<String>(node.getValue());
 }
 
 void Executor::visit(const UnaryNode& node)
 {
   node.getTerm().accept(*this);
-  auto term = std::get<double>(value_);
 
+  NumberValueAnalyser analyser{};
+  value_->accept(analyser);
+  auto term = analyser.getValue().value();
+  auto newValue = term;
   switch(node.getOperation())
   {
     case UnaryOperator::BinaryNegation:
-      value_ = ~static_cast<unsigned int>(term);
+      newValue = ~static_cast<unsigned int>(term);
       break;
     case UnaryOperator::LogicalNot:
-      value_ = term == 0 ? 1 : 0;
+      newValue = term == 0 ? 1 : 0;
       break;
     case UnaryOperator::Minus:
-      value_ = -term;
+      newValue = -term;
       break;
   }
+
+  value_ = std::make_unique<Number>(newValue);
 }
 
 void Executor::visit(const VariableDeclarationNode& node)
@@ -406,5 +386,5 @@ void Executor::visit(const VariableNode& node)
   auto executor = Executor{analyser.getContext()};
 
   value->accept(executor);
-  value_ = executor.getValue();
+  value_ = executor.getValue()->clone();
 }

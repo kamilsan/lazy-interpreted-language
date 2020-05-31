@@ -38,5 +38,5 @@ private:
   bool comparisonShiftOrAssignment(char c, TokenType typeComparison, 
     TokenType typeComparisonEq, TokenType typeShift, TokenType typeAssign);
 
-  char handleEscapeSeqence() const;
+  char handleEscapeSequence() const;
 };

@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.4)
 project(interpreter)
 
 if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Debug)
+  set(CMAKE_BUILD_TYPE Release)
 endif()
 
 set(CMAKE_CXX_STANDARD 17)
@@ -35,7 +35,7 @@ set(PROJECT_CODE
   src/Stream.cpp include/Stream.hpp
   src/Tokenizer.cpp include/Tokenizer.hpp
   src/Parser.cpp include/Parser.hpp
-)
+  src/Value.cpp include/Value.h)
 
 add_executable(interpreter
   ${PROJECT_CODE}

@@ -2,12 +2,10 @@
 
 #include "Visitor.hpp"
 #include "Context.hpp"
+#include "Value.h"
 
-#include <variant>
 #include <string>
 #include <stack>
-
-#include <iostream>
 
 class Executor : public Visitor
 {
@@ -15,7 +13,9 @@ public:
   Executor(): value_(), context_(), returnStack_() {}
   Executor(const Context& context): value_(), context_(context), returnStack_() {}
 
-  const std::variant<double, std::string>& getValue() const { return value_; }
+  Executor(const Executor&) = delete;
+
+  const std::unique_ptr<Value>& getValue() const { return value_; }
 
   void visit(const AssignmentNode&) override;
   void visit(const BinaryOpNode&) override;
@@ -35,9 +35,8 @@ public:
   void visit(const VariableNode&) override;
 
 private:
-  using Value = std::variant<double, std::string>;
 
-  Value value_;
+  std::unique_ptr<Value> value_;
   Context context_;
-  std::stack<Value> returnStack_;
+  std::stack<std::unique_ptr<Value>> returnStack_;
 };

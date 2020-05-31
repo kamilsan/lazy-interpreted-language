@@ -168,7 +168,7 @@ bool Tokenizer::tryToGetString()
       else if(stream_.peek() == '\\')
       {
         stream_.advance();
-        ss << handleEscapeSeqence();
+        ss << handleEscapeSequence();
       }
       else
         ss << (char)stream_.peek();
@@ -349,7 +349,7 @@ bool Tokenizer::comparisonShiftOrAssignment(char c, TokenType typeComparison,
   return true;
 }
 
-char Tokenizer::handleEscapeSeqence() const
+char Tokenizer::handleEscapeSequence() const
 {
   switch(stream_.peek())
   {
