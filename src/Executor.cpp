@@ -9,8 +9,59 @@ void Executor::visit(const AssignmentNode& node)
 {
   const auto name = node.getName();
   auto symbol = context_.lookup(name);
-  ValueChanger valueChanger{node.getValue()};
-  symbol.value().get().accept(valueChanger);
+  if(node.getOperation() == AssignmentOperator::Assign)
+  {
+    ValueChanger valueChanger{node.getValue()};
+    symbol.value().get().accept(valueChanger);
+  }
+  else
+  {
+    RuntimeVariableAnalyser analyser{};
+    symbol.value().get().accept(analyser);
+    Executor executor{analyser.getContext()};
+    analyser.getValue()->accept(executor);
+    const auto oldValue = std::get<double>(executor.getValue());
+
+    node.getValue()->accept(*this);
+    const auto rhs = std::get<double>(value_);
+
+    double newValue = oldValue;
+    switch(node.getOperation())
+    {
+      case AssignmentOperator::PlusEq:
+        newValue = oldValue + rhs;
+        break;
+      case AssignmentOperator::MinusEq:
+        newValue = oldValue - rhs;
+        break;
+      case AssignmentOperator::MulEq:
+        newValue = oldValue * rhs;
+        break;
+      case AssignmentOperator::DivEq:
+        newValue = oldValue / rhs;
+        break;
+      case AssignmentOperator::OrEq:
+        newValue = static_cast<unsigned int>(oldValue) | static_cast<unsigned int>(rhs);
+        break;
+      case AssignmentOperator::AndEq:
+        newValue = static_cast<unsigned int>(oldValue) & static_cast<unsigned int>(rhs);
+        break;
+      case AssignmentOperator::XorEq:
+        newValue = static_cast<unsigned int>(oldValue) ^ static_cast<unsigned int>(rhs);
+        break;
+      case AssignmentOperator::ShiftLeftEq:
+        newValue = static_cast<unsigned int>(oldValue) << static_cast<unsigned int>(rhs);
+        break;
+      case AssignmentOperator::ShiftRightEq:
+        newValue = static_cast<unsigned int>(oldValue) >> static_cast<unsigned int>(rhs);
+        break;
+      case AssignmentOperator::Assign:
+        break; // Unreachable
+    }
+
+    ValueChanger valueChanger{std::make_shared<NumericLiteralNode>(newValue)};
+    symbol.value().get().accept(valueChanger);
+  }
 }
 
 void Executor::visit(const BinaryOpNode& node)
@@ -211,7 +262,6 @@ void Executor::visit(const FunctionCallNode& node)
       const auto argName = arg.first;
       const auto type = arg.second;
       std::shared_ptr<ExpressionNode> value = *it;
-      value->accept(*this);
       auto argSymbol = std::make_unique<RuntimeVariableSymbol>(argName, type, value, context_.clone());
       context_.addSymbol(argName, std::move(argSymbol));
 
@@ -253,8 +303,26 @@ void Executor::visit(const FunctionResultCallNode&)
 
 }
 
-void Executor::visit(const LambdaCallNode&)
+void Executor::visit(const LambdaCallNode& node)
 {
+  const auto& lambda = node.getLambda();
+  context_.enterScope();
+
+  auto it = node.getArguments().begin();
+  for(const auto& arg : lambda.getArguments())
+  {
+    const auto argName = arg.first;
+    const auto type = arg.second;
+    std::shared_ptr<ExpressionNode> value = *it;
+    auto argSymbol = std::make_unique<RuntimeVariableSymbol>(argName, type, value, context_.clone());
+    context_.addSymbol(argName, std::move(argSymbol));
+
+    ++it;
+  }
+
+  lambda.getBody().accept(*this);
+
+  context_.leaveScope();
 
 }
 
@@ -337,8 +405,8 @@ void Executor::visit(const VariableNode& node)
   const auto& value = analyser.getValue();
   auto executor = Executor{analyser.getContext()};
 
-  std::cout << "Evaluating variable " << name << " in context:\n";
-  analyser.getContext().debug();
+  //std::cout << "Evaluating variable " << name << " in context:\n";
+  //analyser.getContext().debug();
 
   value->accept(executor);
   value_ = executor.getValue();

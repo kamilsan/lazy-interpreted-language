@@ -74,7 +74,7 @@ void Context::debug() const
   int depth = scopes_.size();
   for(auto scopesIt = scopes_.crbegin(); scopesIt != scopes_.crend(); ++scopesIt, --depth)
   {
-    std::cout << "Symbols in scope " << depth << "\n";
+    //std::cout << "Symbols in scope " << depth << "\n";
     for(const auto& symbol : *scopesIt)
     {
       const auto name = symbol.first;
@@ -86,10 +86,10 @@ void Context::debug() const
       {
         Executor executor{vis.getContext()};
         vis.getValue()->accept(executor);
-        std::cout << "Variable " << name << " with value " << std::get<double>(executor.getValue()) << "\n";
+        //std::cout << "Variable " << name << " with value " << std::get<double>(executor.getValue()) << "\n";
       }
-      else
-        std::cout << "Function " << name << "\n";
+      else{}
+        //std::cout << "Function " << name << "\n";
     }
   }
 }
