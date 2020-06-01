@@ -42,7 +42,7 @@ private:
   };
 
   void addBuildInSymbols();
-  void reportError(const std::string& message, const Node& node) const;
+  [[noreturn]] void reportError(const std::string& message, const Node& node) const;
 
   SymbolTable symbols_;
   std::stack<ReturnInfo> hasReturn_;

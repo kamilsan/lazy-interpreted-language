@@ -5,6 +5,22 @@
 
 #include "AST.hpp"
 
+void Executor::assertValueType(const Value& value, const TypeName& type, const std::string& activity, const Node& node) const
+{
+  if(value.getType() != type)
+    reportError("Cannot perform " + activity +
+      " with value of type " + TypeNameStrings.at(value.getType()) + "!", node);
+}
+
+[[noreturn]]
+void Executor::reportError(const std::string& message, const Node& node) const
+{
+  const auto mark = node.getMark();
+  std::stringstream ss;
+  ss << "ERROR (" << mark.to_string() << "): " << message;
+  throw std::runtime_error(ss.str());
+}
+
 void Executor::visit(const AssignmentNode& node)
 {
   const auto name = node.getName();
@@ -22,10 +38,18 @@ void Executor::visit(const AssignmentNode& node)
     analyser.getValue()->accept(executor);
 
     NumberValueAnalyser valueAnalyser{};
+
+    assertValueType(*executor.getValue(), TypeName::F32,
+                    "assignment operation " + AssignmentOperationNames.at(node.getOperation()), node);
+
     executor.getValue()->accept(valueAnalyser);
     const auto oldValue = valueAnalyser.getValue().value();
 
     node.getValue()->accept(*this);
+
+    assertValueType(*value_, TypeName::F32,
+      "assignment operation " + AssignmentOperationNames.at(node.getOperation()), node);
+
     value_->accept(valueAnalyser);
     const auto rhs = valueAnalyser.getValue().value();
 
@@ -99,20 +123,32 @@ void Executor::visit(const BinaryOpNode& node)
         value_ = std::make_unique<String>(l + std::to_string(r));
       }
       else
-        throw std::runtime_error(""); // TODO
+        reportError("String cannot be concatenated with value of type "  +
+          TypeNameStrings.at(right->getType()) + "!", node);
     }
-    else
+    else if(left->getType() == TypeName::F32)
     {
       NumberValueAnalyser numberValueAnalyser{};
       left->accept(numberValueAnalyser);
       const auto l = numberValueAnalyser.getValue().value();
+
+      assertValueType(*right, TypeName::F32, "addition", node);
+
       right->accept(numberValueAnalyser);
       const auto r = numberValueAnalyser.getValue().value();
 
       value_ = std::make_unique<Number>(l + r);
     }
+    else
+      reportError("Operation cannot be performed with value of type "  +
+                  TypeNameStrings.at(left->getType()) + "!", node);
   }
   else {
+    assertValueType(*left, TypeName::F32,
+            "binary operation " + BinaryOperationNames.at(node.getOperation()), node);
+    assertValueType(*right, TypeName::F32,
+            "binary operation " + BinaryOperationNames.at(node.getOperation()), node);
+
     NumberValueAnalyser valueAnalyser{};
     left->accept(valueAnalyser);
     const auto l = valueAnalyser.getValue().value();
@@ -193,36 +229,9 @@ void Executor::visit(const FunctionCallNode& node)
 {
   const auto name = node.getName();
   if(name == "print")
-  {
-    const auto& args = node.getArguments();
-    (*args.begin())->accept(*this);
-
-    StringValueAnalyser analyser{};
-    value_->accept(analyser);
-
-    const auto str = analyser.getValue().value();
-    std::cout << str << "\n";
-  }
+    handlePrint(node);
   else if(name == "if")
-  {
-    const auto& args = node.getArguments();
-    auto it = args.begin();
-    (*it)->accept(*this);
-
-    NumberValueAnalyser analyser{};
-    value_->accept(analyser);
-    const auto condition = analyser.getValue().value();
-
-    if(std::fabs(condition) > 0.0001)
-    {
-      it++;
-      (*it)->accept(*this);
-    }
-    else
-    {
-      args.back()->accept(*this);
-    }
-  }
+    handleIf(node);
   else
   {
     const auto symbol = context_.lookup(name);
@@ -231,71 +240,13 @@ void Executor::visit(const FunctionCallNode& node)
 
     if(functionAnalyser.isSymbolValid())
     {
-      context_.enterScope();
-
-      auto it = node.getArguments().begin();
-      for (const auto &arg : functionAnalyser.getArguments())
-      {
-        const auto argName = arg.first;
-        const auto type = arg.second;
-        std::shared_ptr<ExpressionNode> value = *it;
-        auto argSymbol = std::make_unique<RuntimeVariableSymbol>(argName, type, value, context_.clone());
-        context_.addSymbol(argName, std::move(argSymbol));
-
-        ++it;
-      }
-
-      functionAnalyser.getBody()->accept(*this);
-
-      context_.leaveScope();
-
-      if (functionAnalyser.getReturnType() != TypeName::Void)
-      {
-        value_ = std::move(returnStack_.top());
-        returnStack_.pop();
-      }
+      handleFunctionCall(node, functionAnalyser);
     }
     else
     {
       auto variableAnalyser = RuntimeVariableAnalyser{};
       symbol.value().get().accept(variableAnalyser);
-
-      const auto value = variableAnalyser.getValue();
-      auto executor = Executor{variableAnalyser.getContext()};
-      value->accept(executor);
-
-      auto valueAnalyser = FunctionValueAnalyser{};
-      executor.getValue()->accept(valueAnalyser);
-
-      const auto expectedArgs = valueAnalyser.getArguments();
-      if(expectedArgs->size() != node.getArguments().size())
-        throw std::runtime_error("Arguments count mismatch"); // TODO
-
-      Context newContext = valueAnalyser.getContext()->clone();
-
-      newContext.enterScope();
-
-      auto it = node.getArguments().begin();
-      for (const auto &arg : valueAnalyser.getArguments().value())
-      {
-        const auto argName = arg.first;
-        const auto type = arg.second; // TODO: Some sort of type check
-        std::shared_ptr<ExpressionNode> argValue = *it;
-        auto argSymbol = std::make_unique<RuntimeVariableSymbol>(argName, type, argValue, newContext.clone());
-        newContext.addSymbol(argName, std::move(argSymbol));
-
-        ++it;
-      }
-
-      Executor functionExecutor{newContext};
-      valueAnalyser.getBody()->accept(functionExecutor);
-
-      newContext.leaveScope();
-
-      if (valueAnalyser.getReturnType() != TypeName::Void)
-      {
-        value_ = functionExecutor.getValue()->clone();
-      }
+      handleVariableCall(node, variableAnalyser);
     }
   }
 }
@@ -343,7 +294,6 @@ void Executor::visit(const LambdaCallNode& node)
   lambda.getBody().accept(*this);
 
   context_.leaveScope();
-
 }
 
 void Executor::visit(const LambdaNode& node)
@@ -390,6 +340,9 @@ void Executor::visit(const UnaryNode& node)
 {
   node.getTerm().accept(*this);
 
+  assertValueType(*value_, TypeName::F32,
+    "unary operation " + UnaryOperationNames.at(node.getOperation()), node);
+
   NumberValueAnalyser analyser{};
   value_->accept(analyser);
   auto term = analyser.getValue().value();
@@ -425,8 +378,6 @@ void Executor::visit(const VariableNode& node)
   const auto name = node.getName();
   const auto symbol = context_.lookup(name);
 
-  if(symbol.has_value() == false) std::cout <<  "Could not found symbol " << name << "\n";
-
   RuntimeVariableAnalyser analyser{};
   symbol.value().get().accept(analyser);
 
@@ -448,5 +399,115 @@ void Executor::visit(const VariableNode& node)
     const auto body = functionAnalyser.getBody();
 
     value_ = std::make_unique<Function>(returnType, args, body, context_.clone());
+  }
+}
+
+void Executor::handlePrint(const FunctionCallNode& node)
+{
+  const auto& args = node.getArguments();
+  (*args.begin())->accept(*this);
+
+  if(value_->getType() != TypeName::String)
+    reportError("Function print expected string, but got " +
+      TypeNameStrings.at(value_->getType()) + "!", node);
+
+  StringValueAnalyser analyser{};
+  value_->accept(analyser);
+
+  const auto str = analyser.getValue().value();
+  std::cout << str << "\n";
+}
+
+void Executor::handleIf(const FunctionCallNode& node)
+{
+  const auto& args = node.getArguments();
+  auto it = args.begin();
+  (*it)->accept(*this);
+
+  if(value_->getType() != TypeName::F32)
+    reportError("Function if expected logical expression, but got " +
+                TypeNameStrings.at(value_->getType()) + "!", node);
+
+  NumberValueAnalyser analyser{};
+  value_->accept(analyser);
+  const auto condition = analyser.getValue().value();
+
+  if(std::fabs(condition) > 0.0001)
+  {
+    it++;
+    (*it)->accept(*this);
+  }
+  else
+  {
+    args.back()->accept(*this);
+  }
+}
+
+void Executor::handleVariableCall(const FunctionCallNode& node, const RuntimeVariableAnalyser& variableAnalyser)
+{
+  const auto value = variableAnalyser.getValue();
+  auto executor = Executor{variableAnalyser.getContext()};
+  value->accept(executor);
+
+  auto valueAnalyser = FunctionValueAnalyser{};
+  executor.getValue()->accept(valueAnalyser);
+
+  const auto nExpectedArgs = valueAnalyser.getArguments()->size();
+  const auto nProvidedArgs = node.getArguments().size();
+  if(nExpectedArgs != nProvidedArgs)
+    reportError("Function " + node.getName() + " expected " +
+                std::to_string(nExpectedArgs) + ", but got " + std::to_string(nProvidedArgs) + " arguments!", node);
+
+  Context newContext = valueAnalyser.getContext()->clone();
+
+  newContext.enterScope();
+
+  auto it = node.getArguments().begin();
+  for (const auto &arg : valueAnalyser.getArguments().value())
+  {
+    const auto argName = arg.first;
+    const auto type = arg.second;
+    std::shared_ptr<ExpressionNode> argValue = *it;
+    auto argSymbol = std::make_unique<RuntimeVariableSymbol>(argName, type, argValue, newContext.clone());
+    newContext.addSymbol(argName, std::move(argSymbol));
+
+    ++it;
+  }
+
+  Executor functionExecutor{newContext};
+  valueAnalyser.getBody()->accept(functionExecutor);
+
+  newContext.leaveScope();
+
+  if (valueAnalyser.getReturnType() != TypeName::Void)
+  {
+    value_ = functionExecutor.getValue()->clone();
+  }
+}
+
+void Executor::handleFunctionCall(const FunctionCallNode& node, const RuntimeFunctionAnalyser& functionAnalyser)
+{
+  context_.enterScope();
+
+  auto it = node.getArguments().begin();
+  for (const auto &arg : functionAnalyser.getArguments())
+  {
+    const auto argName = arg.first;
+    const auto type = arg.second;
+    std::shared_ptr<ExpressionNode> value = *it;
+    auto argSymbol = std::make_unique<RuntimeVariableSymbol>(argName, type, value, context_.clone());
+    context_.addSymbol(argName, std::move(argSymbol));
+
+    ++it;
+  }
+
+  functionAnalyser.getBody()->accept(*this);
+
+  context_.leaveScope();
+
+  if (functionAnalyser.getReturnType() != TypeName::Void)
+  {
+    value_ = std::move(returnStack_.top());
+    returnStack_.pop();
   }
 }

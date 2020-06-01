@@ -47,7 +47,7 @@ private:
   std::pair<std::string, TypeName> parseArgument();
   std::list<std::pair<std::string, TypeName>> parseArgumentList();
 
-  void reportError(const std::string& msg) const;
+  [[noreturn]] void reportError(const std::string& msg) const;
   void expectToken(TokenType type, const std::string& msg);
   Token getToken(TokenType type, const std::string& msg);
 

@@ -35,6 +35,13 @@ public:
   void visit(const VariableNode&) override;
 
 private:
+  void handlePrint(const FunctionCallNode&);
+  void handleIf(const FunctionCallNode&);
+  void handleVariableCall(const FunctionCallNode&, const RuntimeVariableAnalyser&);
+  void handleFunctionCall(const FunctionCallNode&, const RuntimeFunctionAnalyser&);
+
+  void assertValueType(const Value& value, const TypeName& type, const std::string& activity, const Node& node) const;
+  [[noreturn]] void reportError(const std::string& message, const Node& node) const;
 
   std::unique_ptr<Value> value_;
   Context context_;
