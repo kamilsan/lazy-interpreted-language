@@ -6,16 +6,19 @@
 
 #include <string>
 #include <stack>
+#include <sstream>
 
 class Executor : public Visitor
 {
 public:
-  Executor(): value_(), context_(), returnStack_() {}
-  Executor(const Context& context): value_(), context_(context), returnStack_() {}
+  Executor(): value_(), context_(), returnStack_(), stdout_(), exitCode_(0) {}
+  Executor(const Context& context): value_(), context_(context), returnStack_(), stdout_(), exitCode_(0) {}
 
   Executor(const Executor&) = delete;
 
   const std::unique_ptr<Value>& getValue() const { return value_; }
+  int getExitCode() const { return exitCode_; }
+  std::string getStandardOut() const { return stdout_.str(); }
 
   void visit(const AssignmentNode&) override;
   void visit(const BinaryOpNode&) override;
@@ -46,4 +49,6 @@ private:
   std::unique_ptr<Value> value_;
   Context context_;
   std::stack<std::unique_ptr<Value>> returnStack_;
+  std::ostringstream stdout_;
+  int exitCode_;
 };

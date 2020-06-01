@@ -317,6 +317,10 @@ void Executor::visit(const ProgramNode& node)
   context_.enterScope();
   functionAnalyser.getBody()->accept(*this);
   context_.leaveScope();
+
+  auto valueAnalyser = NumberValueAnalyser{};
+  value_->accept(valueAnalyser);
+  exitCode_ = valueAnalyser.getValue().value();
 }
 
 void Executor::visit(const ReturnNode& node)
@@ -373,12 +377,15 @@ void Executor::visit(const VariableNode& node)
   const auto name = node.getName();
   const auto symbol = context_.lookup(name);
 
+  if(!symbol)
+    reportError("Dereferencing invalid symbol " + name + "!", node);
+
   RuntimeVariableAnalyser analyser{};
   symbol.value().get().accept(analyser);
 
   if(analyser.isSymbolValid())
   {
-    const auto &value = analyser.getValue();
+    const auto& value = analyser.getValue();
     auto executor = Executor{analyser.getContext()};
 
     value->accept(executor);
@@ -410,7 +417,7 @@ void Executor::handlePrint(const FunctionCallNode& node)
   value_->accept(analyser);
 
   const auto str = analyser.getValue().value();
-  std::cout << str << "\n";
+  stdout_ << str << "\n";
 }
 
 void Executor::handleIf(const FunctionCallNode& node)
@@ -506,6 +513,7 @@ void Executor::callValue(const CallNode& node, const std::string& name, const Va
 
   newContext.leaveScope();
 
+  stdout_ << functionExecutor.getStandardOut();
   if (valueAnalyser.getReturnType() != TypeName::Void)
   {
     value_ = functionExecutor.getValue()->clone();

@@ -50,6 +50,6 @@ add_executable(interpreter_tests
   tests/ParserTests.cpp
   tests/SemanticAnalyserTests.cpp
   tests/main_test.cpp
-)
+        tests/ExecutorTests.cpp)
 
 target_link_libraries(interpreter_tests gtest gtest_main)

@@ -34,6 +34,8 @@ int main(int argc, char* argv[])
     program->accept(executor);
     
     sourceFile.close();
+
+    std::cout << executor.getStandardOut();
   }
   catch(std::runtime_error& er)
   {

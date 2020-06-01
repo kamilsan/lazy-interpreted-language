@@ -100,7 +100,8 @@ class RuntimeVariableSymbol : public RuntimeSymbol
 public:
   RuntimeVariableSymbol(const std::string& name, const TypeName& type,
           std::shared_ptr<ExpressionNode> value, const Context& context):
-    name_(name), type_(type), value_(std::move(value)), context_(context) {}
+    name_(name), type_(type), value_(std::move(value)), context_(context)
+  {}
 
   const std::string& getName() const { return name_; }
   const TypeName& getType() const { return type_; }
