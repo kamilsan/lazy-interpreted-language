@@ -29,9 +29,6 @@ public:
   void visit(const VariableNode&) override;
 
 private:
-  void reportError(const std::string& message, const Node& node) const;
-
-
   std::optional<TypeName> type_;
   const SymbolTable& symbols_;
 };

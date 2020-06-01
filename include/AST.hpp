@@ -131,6 +131,12 @@ public:
   virtual void accept(Visitor&) const = 0;
 };
 
+class CallNode : public ExpressionNode
+{
+public:
+  virtual const std::list<std::shared_ptr<ExpressionNode>>& getArguments() const = 0;
+};
+
 class ProgramNode : public Node
 {
 public:
@@ -222,7 +228,7 @@ private:
   std::unique_ptr<ExpressionNode> rightOperand_;
 };
 
-class FunctionResultCallNode : public ExpressionNode
+class FunctionResultCallNode : public CallNode
 {
 public:
   FunctionResultCallNode(std::unique_ptr<ExpressionNode> call, 
@@ -230,7 +236,7 @@ public:
       call_(std::move(call)), arguments_(std::move(arguments)) {}
 
   const ExpressionNode& getCall() const { return *call_; }
-  const std::list<std::shared_ptr<ExpressionNode>>& getArguments() const { return arguments_; }
+  const std::list<std::shared_ptr<ExpressionNode>>& getArguments() const override { return arguments_; }
 
   void accept(Visitor& visitor) const override { visitor.visit(*this); }
 private:
@@ -238,7 +244,7 @@ private:
   std::list<std::shared_ptr<ExpressionNode>> arguments_;
 };
 
-class FunctionCallNode : public ExpressionNode
+class FunctionCallNode : public CallNode
 {
 public:
   FunctionCallNode(const std::string& name, 
@@ -246,7 +252,7 @@ public:
       name_(name), arguments_(std::move(arguments)) {}
 
   const std::string& getName() const { return name_; }
-  const std::list<std::shared_ptr<ExpressionNode>>& getArguments() const { return arguments_; }
+  const std::list<std::shared_ptr<ExpressionNode>>& getArguments() const override { return arguments_; }
 
   void accept(Visitor& visitor) const override { visitor.visit(*this); }
 private:
@@ -273,7 +279,7 @@ private:
   std::shared_ptr<BlockNode> body_;
 };
 
-class LambdaCallNode : public ExpressionNode
+class LambdaCallNode : public CallNode
 {
 public:
   LambdaCallNode(std::unique_ptr<LambdaNode> lambda, 
@@ -281,7 +287,7 @@ public:
       lambda_(std::move(lambda)), arguments_(std::move(arguments)) {}
 
   const LambdaNode& getLambda() const { return *lambda_; }
-  const std::list<std::shared_ptr<ExpressionNode>>& getArguments() const { return arguments_; }
+  const std::list<std::shared_ptr<ExpressionNode>>& getArguments() const override { return arguments_; }
 
   void accept(Visitor& visitor) const override { visitor.visit(*this); }
 private:

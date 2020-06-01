@@ -24,10 +24,12 @@ int main(int argc, char* argv[])
     }
 
     Parser parser{sourceFile};
+    //PrintVisitor printer{};
     SemanticAnalyser semantic{};
     Executor executor{};
     
     auto program = parser.parseProgram();
+    //program->accept(printer);
     program->accept(semantic);
     program->accept(executor);
     

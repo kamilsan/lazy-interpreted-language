@@ -13,9 +13,9 @@ class ValueVisitor
 {
 public:
 
-  virtual void visit(Number&) = 0;
-  virtual void visit(String&) = 0;
-  virtual void visit(Function&) = 0;
+  virtual void visit(const Number&) = 0;
+  virtual void visit(const String&) = 0;
+  virtual void visit(const Function&) = 0;
 
 };
 
@@ -27,7 +27,7 @@ public:
   const TypeName& getType() const { return valueType_; }
 
   virtual std::unique_ptr<Value> clone() const = 0;
-  virtual void accept(ValueVisitor& visitor) = 0;
+  virtual void accept(ValueVisitor& visitor) const = 0;
 private:
   TypeName valueType_;
 };
@@ -40,7 +40,7 @@ public:
   double getValue() const { return value_; }
 
   std::unique_ptr<Value> clone() const override;
-  void accept(ValueVisitor& visitor) override { visitor.visit(*this); }
+  void accept(ValueVisitor& visitor) const override { visitor.visit(*this); }
 private:
   double value_;
 };
@@ -53,7 +53,7 @@ public:
   const std::string& getValue() const { return value_; }
 
   std::unique_ptr<Value> clone() const override;
-  void accept(ValueVisitor& visitor) override { visitor.visit(*this); }
+  void accept(ValueVisitor& visitor) const override { visitor.visit(*this); }
 private:
   std::string value_;
 };
@@ -73,7 +73,7 @@ public:
   const Context& getContext() const { return context_; }
 
   std::unique_ptr<Value> clone() const override;
-  void accept(ValueVisitor& visitor) override { visitor.visit(*this); }
+  void accept(ValueVisitor& visitor) const override { visitor.visit(*this); }
 private:
   TypeName returnType_;
   ArgumentsList arguments_;
@@ -89,9 +89,9 @@ public:
   bool isValid() const { return valid_; }
   const std::optional<double>& getValue() const { return value_; }
 
-  void visit(Number&) override;
-  void visit(String&) override;
-  void visit(Function&) override;
+  void visit(const Number&) override;
+  void visit(const String&) override;
+  void visit(const Function&) override;
 private:
   bool valid_;
   std::optional<double> value_;
@@ -105,9 +105,9 @@ public:
   bool isValid() const { return valid_; }
   const std::optional<std::string>& getValue() const { return value_; }
 
-  void visit(Number&) override;
-  void visit(String&) override;
-  void visit(Function&) override;
+  void visit(const Number&) override;
+  void visit(const String&) override;
+  void visit(const Function&) override;
 private:
   bool valid_;
   std::optional<std::string> value_;
@@ -124,9 +124,9 @@ public:
   const std::shared_ptr<BlockNode>& getBody() const { return body_; }
   const std::optional<Context>& getContext() const { return context_; }
 
-  void visit(Number&) override;
-  void visit(String&) override;
-  void visit(Function&) override;
+  void visit(const Number&) override;
+  void visit(const String&) override;
+  void visit(const Function&) override;
 private:
   bool valid_;
   std::optional<TypeName> returnType_;

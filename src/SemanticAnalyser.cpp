@@ -1,15 +1,7 @@
 #include "SemanticAnalyser.hpp"
 
+#include "Common.hpp"
 #include "TypeChecker.hpp"
-
-[[noreturn]]
-void SemanticAnalyser::reportError(const std::string& message, const Node& node) const
-{
-  const auto mark = node.getMark();
-  std::stringstream ss;
-  ss << "ERROR (" << mark.to_string() << "): " << message;
-  throw std::runtime_error(ss.str());
-}
 
 SemanticAnalyser::SemanticAnalyser(): symbols_(), hasReturn_()
 {

@@ -1,13 +1,6 @@
 #include "TypeChecker.hpp"
 
-[[noreturn]]
-void TypeChecker::reportError(const std::string& message, const Node& node) const
-{
-  const auto mark = node.getMark();
-  std::stringstream ss;
-  ss << "ERROR (" << mark.to_string() << "): " << message;
-  throw std::runtime_error(ss.str());
-}
+#include "Common.hpp"
 
 const std::optional<TypeName>& TypeChecker::getType() const
 {
@@ -64,12 +57,8 @@ void TypeChecker::visit(const FunctionCallStatementNode&)
 void TypeChecker::visit(const FunctionDeclarationNode&)
 {}
 
-void TypeChecker::visit(const FunctionResultCallNode& node)
-{
-  TypeChecker checker{symbols_};
-  node.getCall().accept(checker);
-  type_ = checker.getType();
-}
+void TypeChecker::visit(const FunctionResultCallNode&)
+{}
 
 void TypeChecker::visit(const LambdaCallNode& node)
 {

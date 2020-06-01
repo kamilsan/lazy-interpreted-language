@@ -35,7 +35,8 @@ set(PROJECT_CODE
   src/Stream.cpp include/Stream.hpp
   src/Tokenizer.cpp include/Tokenizer.hpp
   src/Parser.cpp include/Parser.hpp
-  src/Value.cpp include/Value.h)
+  src/Value.cpp include/Value.h
+  src/Common.cpp include/Common.hpp)
 
 add_executable(interpreter
   ${PROJECT_CODE}

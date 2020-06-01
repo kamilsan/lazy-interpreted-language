@@ -3,6 +3,7 @@
 #include <cmath>
 #include <iostream>
 
+#include "Common.hpp"
 #include "AST.hpp"
 
 void Executor::assertValueType(const Value& value, const TypeName& type, const std::string& activity, const Node& node) const
@@ -10,15 +11,6 @@ void Executor::assertValueType(const Value& value, const TypeName& type, const s
   if(value.getType() != type)
     reportError("Cannot perform " + activity +
       " with value of type " + TypeNameStrings.at(value.getType()) + "!", node);
-}
-
-[[noreturn]]
-void Executor::reportError(const std::string& message, const Node& node) const
-{
-  const auto mark = node.getMark();
-  std::stringstream ss;
-  ss << "ERROR (" << mark.to_string() << "): " << message;
-  throw std::runtime_error(ss.str());
 }
 
 void Executor::visit(const AssignmentNode& node)
@@ -269,9 +261,12 @@ void Executor::visit(const FunctionDeclarationNode& node)
   context_.addSymbol(name, std::move(symbol));
 }
 
-void Executor::visit(const FunctionResultCallNode&) // TODO
+void Executor::visit(const FunctionResultCallNode& node)
 {
+  node.getCall().accept(*this);
+  assertValueType(*value_, TypeName::Function, "function call", node);
 
+  callValue(node, "result", *value_);
 }
 
 void Executor::visit(const LambdaCallNode& node)
@@ -449,40 +444,7 @@ void Executor::handleVariableCall(const FunctionCallNode& node, const RuntimeVar
   auto executor = Executor{variableAnalyser.getContext()};
   value->accept(executor);
 
-  auto valueAnalyser = FunctionValueAnalyser{};
-  executor.getValue()->accept(valueAnalyser);
-
-  const auto nExpectedArgs = valueAnalyser.getArguments()->size();
-  const auto nProvidedArgs = node.getArguments().size();
-  if(nExpectedArgs != nProvidedArgs)
-    reportError("Function " + node.getName() + " expected " +
-                std::to_string(nExpectedArgs) + ", but got " + std::to_string(nProvidedArgs) + " arguments!", node);
-
-  Context newContext = valueAnalyser.getContext()->clone();
-
-  newContext.enterScope();
-
-  auto it = node.getArguments().begin();
-  for (const auto &arg : valueAnalyser.getArguments().value())
-  {
-    const auto argName = arg.first;
-    const auto type = arg.second;
-    std::shared_ptr<ExpressionNode> argValue = *it;
-    auto argSymbol = std::make_unique<RuntimeVariableSymbol>(argName, type, argValue, newContext.clone());
-    newContext.addSymbol(argName, std::move(argSymbol));
-
-    ++it;
-  }
-
-  Executor functionExecutor{newContext};
-  valueAnalyser.getBody()->accept(functionExecutor);
-
-  newContext.leaveScope();
-
-  if (valueAnalyser.getReturnType() != TypeName::Void)
-  {
-    value_ = functionExecutor.getValue()->clone();
-  }
+  callValue(node, node.getName(), *executor.getValue());
 }
 
 void Executor::handleFunctionCall(const FunctionCallNode& node, const RuntimeFunctionAnalyser& functionAnalyser)
@@ -509,5 +471,43 @@ void Executor::handleFunctionCall(const FunctionCallNode& node, const RuntimeFun
   {
     value_ = std::move(returnStack_.top());
     returnStack_.pop();
+  }
+}
+
+void Executor::callValue(const CallNode& node, const std::string& name, const Value& value)
+{
+  auto valueAnalyser = FunctionValueAnalyser{};
+  value.accept(valueAnalyser);
+
+  const auto nExpectedArgs = valueAnalyser.getArguments()->size();
+  const auto nProvidedArgs = node.getArguments().size();
+  if(nExpectedArgs != nProvidedArgs)
+    reportError("Function " + name + " expected " +
+                std::to_string(nExpectedArgs) + ", but got " + std::to_string(nProvidedArgs) + " arguments!", node);
+
+  Context newContext = valueAnalyser.getContext()->clone();
+
+  newContext.enterScope();
+
+  auto it = node.getArguments().begin();
+  for (const auto &arg : valueAnalyser.getArguments().value())
+  {
+    const auto argName = arg.first;
+    const auto type = arg.second;
+    std::shared_ptr<ExpressionNode> argValue = *it;
+    auto argSymbol = std::make_unique<RuntimeVariableSymbol>(argName, type, argValue, newContext.clone());
+    newContext.addSymbol(argName, std::move(argSymbol));
+
+    ++it;
+  }
+
+  Executor functionExecutor{newContext};
+  valueAnalyser.getBody()->accept(functionExecutor);
+
+  newContext.leaveScope();
+
+  if (valueAnalyser.getReturnType() != TypeName::Void)
+  {
+    value_ = functionExecutor.getValue()->clone();
   }
 }
