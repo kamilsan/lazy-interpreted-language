@@ -258,18 +258,19 @@ class LambdaNode : public ExpressionNode
 {
 public:
   LambdaNode(const TypeName& returnType, 
-    const std::list<std::pair<std::string, TypeName>> args, std::unique_ptr<BlockNode> body):
+    const std::list<std::pair<std::string, TypeName>> args, std::shared_ptr<BlockNode> body):
       returnType_(returnType), arguments_(args), body_(std::move(body)) {}
 
   const TypeName& getReturnType() const { return returnType_; }
   const std::list<std::pair<std::string, TypeName>>& getArguments() const { return arguments_; }
   const BlockNode& getBody() const { return *body_; }
+  const std::shared_ptr<BlockNode>& getBodyPtr() const { return body_; }
 
   void accept(Visitor& visitor) const override { visitor.visit(*this); }
 private:
   TypeName returnType_;
   std::list<std::pair<std::string, TypeName>> arguments_;
-  std::unique_ptr<BlockNode> body_;
+  std::shared_ptr<BlockNode> body_;
 };
 
 class LambdaCallNode : public ExpressionNode

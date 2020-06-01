@@ -12,10 +12,8 @@ std::unique_ptr<Value> String::clone() const
 
 std::unique_ptr<Value> Function::clone() const
 {
-  return nullptr;
- // return std::make_unique<Function>(returnType_, arguments_, body_);
+  return std::make_unique<Function>(returnType_, arguments_, body_, context_.clone());
 }
-
 
 void NumberValueAnalyser::visit(Number& num)
 {
@@ -48,4 +46,23 @@ void StringValueAnalyser::visit(String& str)
 void StringValueAnalyser::visit(Function&)
 {
   valid_ = false;
+}
+
+void FunctionValueAnalyser::visit(Number&)
+{
+  valid_ = false;
+}
+
+void FunctionValueAnalyser::visit(String&)
+{
+  valid_ = false;
+}
+
+void FunctionValueAnalyser::visit(Function& func)
+{
+  valid_ = true;
+  returnType_ = func.getReturnType();
+  arguments_ = func.getArguments();
+  body_ = func.getBodyPtr();
+  context_ = func.getContext();
 }

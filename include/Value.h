@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AST.hpp"
+#include "Context.hpp"
 
 #include <string>
 
@@ -62,13 +63,14 @@ class Function : public Value
 public:
   using ArgumentsList = std::list<std::pair<std::string, TypeName>>;
 
-  Function(const TypeName& returnType, const ArgumentsList& arguments, std::shared_ptr<BlockNode> body):
-    Value(TypeName::Function), returnType_(returnType), arguments_(arguments), body_(body) {}
+  Function(const TypeName& returnType, const ArgumentsList& arguments, std::shared_ptr<BlockNode> body, const Context& context):
+    Value(TypeName::Function), returnType_(returnType), arguments_(arguments), body_(body), context_(context) {}
 
   const TypeName& getReturnType() const { return returnType_; }
   const ArgumentsList & getArguments() const { return arguments_; }
   const BlockNode& getBody() const { return *body_; }
   const std::shared_ptr<BlockNode>& getBodyPtr() const { return body_; }
+  const Context& getContext() const { return context_; }
 
   std::unique_ptr<Value> clone() const override;
   void accept(ValueVisitor& visitor) override { visitor.visit(*this); }
@@ -76,6 +78,7 @@ private:
   TypeName returnType_;
   ArgumentsList arguments_;
   std::shared_ptr<BlockNode> body_;
+  Context context_;
 };
 
 class NumberValueAnalyser : public ValueVisitor
@@ -108,4 +111,26 @@ public:
 private:
   bool valid_;
   std::optional<std::string> value_;
+};
+
+class FunctionValueAnalyser : public ValueVisitor
+{
+public:
+  FunctionValueAnalyser(): valid_(false), returnType_(), arguments_(), body_(nullptr), context_() {}
+
+  bool isValid() const { return valid_; }
+  const std::optional<TypeName>& getReturnType() const { return returnType_; }
+  const std::optional<std::list<std::pair<std::string, TypeName>>>& getArguments() const { return arguments_; }
+  const std::shared_ptr<BlockNode>& getBody() const { return body_; }
+  const std::optional<Context>& getContext() const { return context_; }
+
+  void visit(Number&) override;
+  void visit(String&) override;
+  void visit(Function&) override;
+private:
+  bool valid_;
+  std::optional<TypeName> returnType_;
+  std::optional<std::list<std::pair<std::string, TypeName>>> arguments_;
+  std::shared_ptr<BlockNode> body_;
+  std::optional<Context> context_;
 };

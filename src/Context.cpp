@@ -29,9 +29,9 @@ void RuntimeVariableAnalyser::visit(RuntimeFunctionSymbol&)
 RuntimeFunctionAnalyser::RuntimeFunctionAnalyser():
   symbolValid_(false), returnType_(), arguments_(), body_(nullptr) {}
 
-void RuntimeFunctionAnalyser::visit(RuntimeVariableSymbol& node)
+void RuntimeFunctionAnalyser::visit(RuntimeVariableSymbol&)
 {
-  symbolValid_ = node.getType() == TypeName::Function;
+  symbolValid_ = false;
 }
 
 void RuntimeFunctionAnalyser::visit(RuntimeFunctionSymbol& symbol)
