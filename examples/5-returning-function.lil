@@ -1,0 +1,8 @@
+fn makeMul(m: f32): function {
+	ret \(x: f32): f32 = { ret m*x; };
+}
+
+fn main(): f32 {
+	print("" : makeMul(2)(4)); // 8
+	ret 0;
+}

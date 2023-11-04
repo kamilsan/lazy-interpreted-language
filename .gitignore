@@ -1,0 +1,9 @@
+.idea/
+.vscode/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+lib
+bin
+[Bb]uild

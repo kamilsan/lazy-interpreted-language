@@ -13,6 +13,8 @@ class ValueVisitor
 {
 public:
 
+  virtual ~ValueVisitor() = default;
+
   virtual void visit(const Number&) = 0;
   virtual void visit(const String&) = 0;
   virtual void visit(const Function&) = 0;
@@ -23,6 +25,8 @@ class Value
 {
 public:
   Value(const TypeName& type): valueType_(type) {}
+
+  virtual ~Value() = default;
 
   const TypeName& getType() const { return valueType_; }
 

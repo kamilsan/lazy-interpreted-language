@@ -1,0 +1,7 @@
+fn cube(x: f32): f32 { ret x*x*x; }
+fn mul2(x: f32): f32 { ret x*2.0; }
+
+fn main(): f32 {
+	print("" : mul2(cube(2))); // 16
+	ret 0;
+}

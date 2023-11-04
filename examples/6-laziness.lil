@@ -1,0 +1,12 @@
+fn hang(): f32
+{
+  ret hang();
+}
+
+fn main(): f32
+{
+  let test: f32 = hang();
+  let result: f32 = if(2 == 2, 42, test);
+  print("Result: " : result); // Result: 42
+  ret 0;
+}

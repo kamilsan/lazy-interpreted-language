@@ -1,6 +1,20 @@
 Lazy functional language interpreter
 ====================================
 
+Interpreter for a toy lazy, functional language with syntax inspired by Rust.
+
+### Language features:
+
+* Two build-in types: _f32_ and _function_ (string are supported only as an argument to _print_ function)
+* Support for string concatenation
+* Conditional expressions with build-in function _if_
+* Lazy evaluation
+* Lambdas
+* Higher-order functions
+* Semantic analysis and acceptable error messages
+
+This was made as a final project for *Compilation Techniques* course (2020). 
+
 ### Build:
 
 ```
@@ -94,20 +108,6 @@ fn main(): f32
   ret 0;
 }
 ```
-
-
-
-### Language features:
-
-* Two build-in types: _f32_ and _function_ (string are supported only as an argument to _print_ function)
-* Support for string concatenation
-* Conditional expressions with build-in function _if_
-* Lazy evaluation
-* Lambdas
-* Higher-order functions
-* Semantic analysis and acceptable error messages
-
-
 
 ### Grammar:
 

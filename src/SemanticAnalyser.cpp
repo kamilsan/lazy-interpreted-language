@@ -42,7 +42,7 @@ void SemanticAnalyser::visit(const AssignmentNode& node)
   TypeChecker typeChecker{symbols_};
   node.getValue()->accept(typeChecker);
 
-  // Type checker is not be able to deduce expression's type when variable was called
+  // Type checker is not able to deduce expression's type when variable was called
   // and in that case getType has no value.
   if(typeChecker.getType().has_value() && typeChecker.getType() != analyser.getType())
     reportError("Cannot assign value of type " + 
@@ -279,7 +279,7 @@ void SemanticAnalyser::visit(const VariableDeclarationNode& node)
   TypeChecker typeChecker{symbols_};
   node.getValue()->accept(typeChecker);
 
-  // Type checker is not be able to deduce expression's type when variable was called
+  // Type checker is not able to deduce expression's type when variable was called
   // and in that case getType has no value.
   if(typeChecker.getType().has_value() && typeChecker.getType() != node.getType())
     reportError("Cannot assign value of type " + 

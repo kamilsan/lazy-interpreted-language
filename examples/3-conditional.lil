@@ -1,0 +1,11 @@
+fn test(x: f32, y: f32): f32 {
+	ret if((x > 0 && x < 2) || y < 0,
+		10,
+		42);
+} 
+
+fn main(): f32 {
+	print("" : test(1, 2)); // 10 
+	print("" : test(-1.25, 1)); // 42
+	ret 0;
+}

@@ -20,6 +20,8 @@ class VariableNode;
 class Visitor
 {
 public:
+  virtual ~Visitor() = default;
+
   virtual void visit(const AssignmentNode&) = 0;
   virtual void visit(const BinaryOpNode&) = 0;
   virtual void visit(const BlockNode&) = 0;

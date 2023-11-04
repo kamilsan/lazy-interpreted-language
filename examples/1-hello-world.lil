@@ -1,0 +1,4 @@
+fn main(): f32 {
+	print("Hello World!"); // Hello World!
+	ret 0;
+}

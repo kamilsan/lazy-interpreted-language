@@ -1,0 +1,14 @@
+fn fact(n: f32): f32 {
+	ret if(n == 0, 1, n * fact(n-1));
+}
+
+fn main(): f32 {
+	print("6! = " : fact(6)); // 6! = 720
+	
+	let x: f32 = 12;
+	let y: f32 = x*2 + 2*(3-1);
+	let res: f32 = if(x >= 6, x, y);
+	
+	print("" : res); // 12
+	ret 0;
+}

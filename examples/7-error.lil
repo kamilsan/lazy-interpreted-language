@@ -1,0 +1,13 @@
+// Example with errors to demonstrate error reporting capabilities
+
+fn some_function(input: f32): f32 {
+    let x: f32 = 2;
+    ret x + z + input;
+}
+
+fn main2(): f32 {
+    print("" : y); // y is not in this scope
+    print(some_function(42);
+
+	ret 0;
+}

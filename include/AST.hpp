@@ -112,6 +112,8 @@ class Node
 public:
   Node(const Mark& mark = {}): mark_(mark) {}
 
+  virtual ~Node() = default;
+
   virtual void accept(Visitor&) const = 0;
   const Mark& getMark() const { return mark_; }
   void setMark(const Mark& mark) { mark_ = mark; }
@@ -122,18 +124,24 @@ protected:
 class ExpressionNode : public Node
 {
 public:
+  virtual ~ExpressionNode() = default;
+
   virtual void accept(Visitor&) const = 0;
 };
 
 class StatementNode : public Node
 {
 public:
+  virtual ~StatementNode() = default;
+
   virtual void accept(Visitor&) const = 0;
 };
 
 class CallNode : public ExpressionNode
 {
 public:
+  virtual ~CallNode() = default;
+
   virtual const std::list<std::shared_ptr<ExpressionNode>>& getArguments() const = 0;
 };
 

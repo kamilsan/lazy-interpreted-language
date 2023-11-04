@@ -16,6 +16,8 @@ class FunctionSymbol;
 class SymbolVisitor
 {
 public:
+  virtual ~SymbolVisitor() = default;
+
   virtual void visit(VariableSymbol&) = 0;
   virtual void visit(FunctionSymbol&) = 0;
 };
@@ -55,6 +57,7 @@ private:
 class Symbol
 {
 public:
+  virtual ~Symbol() = default;
   virtual void accept(SymbolVisitor&) = 0;
 };
 

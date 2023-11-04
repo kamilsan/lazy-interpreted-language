@@ -17,6 +17,8 @@ class RuntimeFunctionSymbol;
 class RuntimeSymbolVisitor
 {
 public:
+  virtual ~RuntimeSymbolVisitor() = default;
+
   virtual void visit(RuntimeVariableSymbol&) = 0;
   virtual void visit(RuntimeFunctionSymbol&) = 0;
 };
@@ -91,6 +93,8 @@ private:
 class RuntimeSymbol
 {
 public:
+  virtual ~RuntimeSymbol() = default;
+
   virtual void accept(RuntimeSymbolVisitor&) = 0;
   virtual std::shared_ptr<RuntimeSymbol> clone(const Context& context) const = 0;
 };
